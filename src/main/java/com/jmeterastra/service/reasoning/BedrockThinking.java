@@ -20,7 +20,7 @@ import software.amazon.awssdk.services.bedrockruntime.model.ConverseResponse;
  *   <li><b>Amazon Nova 2</b> - {@code {"reasoningConfig": {"type": "enabled",
  *       "maxReasoningEffort": level}}}; toggle-gated (disabled by default).</li>
  * </ul>
- * Other reasoning-capable Bedrock families (deepseek, qwen, glm, kimi, ...)
+ * Other reasoning-capable Bedrock families (qwen, glm, kimi, ...)
  * send nothing - their reasoning still renders when they stream
  * reasoningContent deltas back.
  */

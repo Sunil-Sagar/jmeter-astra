@@ -29,7 +29,6 @@ import com.jmeterastra.service.AiService;
 import com.google.genai.Client;
 import com.jmeterastra.service.ClaudeService;
 import com.jmeterastra.service.OllamaAiService;
-import com.jmeterastra.service.DeepseekAiService;
 import com.jmeterastra.service.GoogleAiService;
 import com.jmeterastra.service.GrokAiService;
 import com.jmeterastra.service.OpenAiService;
@@ -94,7 +93,6 @@ public class AiChatPanel
     private ClaudeService claudeService;
     private OpenAiService openAiService;
     private OllamaAiService ollamaService;
-    private DeepseekAiService deepseekService;
     private GoogleAiService googleService;
     private GrokAiService grokService;
     private MetaMuseAiService metaMuseService;
@@ -162,7 +160,6 @@ public class AiChatPanel
         claudeService = new ClaudeService();
         openAiService = new OpenAiService();
         ollamaService = new OllamaAiService();
-        deepseekService = new DeepseekAiService();
         grokService = new GrokAiService();
         metaMuseService = new MetaMuseAiService();
         bedrockService = new BedrockAiService();
@@ -288,7 +285,6 @@ public class AiChatPanel
         claudeService.setUsageStats(usageStats);
         openAiService.setUsageStats(usageStats);
         ollamaService.setUsageStats(usageStats);
-        deepseekService.setUsageStats(usageStats);
         grokService.setUsageStats(usageStats);
         metaMuseService.setUsageStats(usageStats);
         bedrockService.setUsageStats(usageStats);
@@ -354,7 +350,6 @@ public class AiChatPanel
         claudeService.setReasoningSettings(reasoningSettings);
         openAiService.setReasoningSettings(reasoningSettings);
         ollamaService.setReasoningSettings(reasoningSettings);
-        deepseekService.setReasoningSettings(reasoningSettings);
         grokService.setReasoningSettings(reasoningSettings);
         metaMuseService.setReasoningSettings(reasoningSettings);
         bedrockService.setReasoningSettings(reasoningSettings);
@@ -767,7 +762,6 @@ public class AiChatPanel
         holder.setClaudeService(claudeService);
         holder.setOpenAiService(openAiService);
         holder.setOllamaService(ollamaService);
-        holder.setDeepseekService(deepseekService);
         holder.setGoogleService(googleService);
         holder.setGrokService(grokService);
         holder.setMetaMuseService(metaMuseService);
@@ -1317,8 +1311,9 @@ public class AiChatPanel
 
     /**
      * Renders the reasoning captured by the service from a non-streaming
-     * response (Claude thinking block, Ollama thinking, DeepSeek
-     * reasoning_content) as an already-collapsed thinking card.
+     * response (Claude thinking block, Ollama thinking, or another
+     * OpenAI-compatible provider's reasoning_content) as an already-collapsed
+     * thinking card.
      */
     private void showNonStreamReasoning() {
         AiService service = resolveAiService(getSelectedModel());

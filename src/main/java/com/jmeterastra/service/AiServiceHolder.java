@@ -8,7 +8,6 @@ public class AiServiceHolder {
     private ClaudeService claudeService;
     private OpenAiService openAiService;
     private OllamaAiService ollamaService;
-    private DeepseekAiService deepseekService;
     private GoogleAiService googleService;
     private GrokAiService grokService;
     private MetaMuseAiService metaMuseService;
@@ -38,14 +37,6 @@ public class AiServiceHolder {
 
     public void setOllamaService(OllamaAiService ollamaService) {
         this.ollamaService = ollamaService;
-    }
-
-    public DeepseekAiService getDeepseekService() {
-        return deepseekService;
-    }
-
-    public void setDeepseekService(DeepseekAiService deepseekService) {
-        this.deepseekService = deepseekService;
     }
 
     public GoogleAiService getGoogleService() {

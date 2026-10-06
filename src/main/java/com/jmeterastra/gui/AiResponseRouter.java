@@ -11,7 +11,6 @@ import com.jmeterastra.service.CliSubscriptionAiService;
 import com.jmeterastra.service.CodexAiService;
 import com.jmeterastra.service.OllamaAiService;
 import com.jmeterastra.service.OpenAiService;
-import com.jmeterastra.service.DeepseekAiService;
 import com.jmeterastra.service.GoogleAiService;
 import com.jmeterastra.service.GrokAiService;
 import com.jmeterastra.service.MetaMuseAiService;
@@ -32,7 +31,6 @@ public class AiResponseRouter {
     private final ClaudeService claudeService;
     private final OpenAiService openAiService;
     private final OllamaAiService ollamaService;
-    private final DeepseekAiService deepseekService;
     private final GoogleAiService googleService;
     private final GrokAiService grokService;
     private final MetaMuseAiService metaMuseService;
@@ -45,7 +43,6 @@ public class AiResponseRouter {
         this.claudeService = serviceHolder.getClaudeService();
         this.openAiService = serviceHolder.getOpenAiService();
         this.ollamaService = serviceHolder.getOllamaService();
-        this.deepseekService = serviceHolder.getDeepseekService();
         this.googleService = serviceHolder.getGoogleService();
         this.grokService = serviceHolder.getGrokService();
         this.metaMuseService = serviceHolder.getMetaMuseService();
@@ -96,11 +93,6 @@ public class AiResponseRouter {
             log.info("Using Ollama model: {}", ollamaModelId);
             ollamaService.setModel(ollamaModelId);
             return ollamaService.generateResponse(conversationHistory);
-        } else if (selectedModel.startsWith("deepseek:")) {
-            String deepseekModelId = selectedModel.substring(9);
-            log.info("Using DeepSeek model: {}", deepseekModelId);
-            deepseekService.setModel(deepseekModelId);
-            return deepseekService.generateResponse(conversationHistory);
         } else if (selectedModel.startsWith("google:")) {
             String googleModelId = selectedModel.substring(7);
             log.info("Using Google Gemini model: {}", googleModelId);
@@ -190,9 +182,6 @@ public class AiResponseRouter {
         } else if (selectedModel.startsWith("ollama:")) {
             String ollamaModelId = selectedModel.substring(7);
             return ollamaService.generateStreamResponse(conversationHistory, ollamaModelId, tokenConsumer, reasoningConsumer, onComplete, onError);
-        } else if (selectedModel.startsWith("deepseek:")) {
-            String deepseekModelId = selectedModel.substring(9);
-            return deepseekService.generateStreamResponse(conversationHistory, deepseekModelId, tokenConsumer, reasoningConsumer, onComplete, onError);
         } else if (selectedModel.startsWith("google:")) {
             String googleModelId = selectedModel.substring(7);
             if (googleService != null) {
@@ -280,10 +269,6 @@ public class AiResponseRouter {
             String ollamaModelId = selectedModel.substring(7);
             ollamaService.setModel(ollamaModelId);
             return ollamaService;
-        } else if (selectedModel.startsWith("deepseek:")) {
-            String deepseekModelId = selectedModel.substring(9);
-            deepseekService.setModel(deepseekModelId);
-            return deepseekService;
         } else if (selectedModel.startsWith("google:")) {
             String googleModelId = selectedModel.substring(7);
             if (googleService != null) {

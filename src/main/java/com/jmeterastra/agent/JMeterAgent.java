@@ -33,7 +33,6 @@ import com.jmeterastra.cli.SubscriptionCliProvider;
 import com.jmeterastra.service.AiService;
 import com.jmeterastra.service.ClaudeService;
 import com.jmeterastra.service.CliSubscriptionAiService;
-import com.jmeterastra.service.DeepseekAiService;
 import com.jmeterastra.service.GoogleAiService;
 import com.jmeterastra.service.GrokAiService;
 import com.jmeterastra.service.MetaMuseAiService;
@@ -44,7 +43,7 @@ import com.jmeterastra.utils.AiConfig;
 
 /**
  * Façade that wires the tool registry, executor, schema-grounded system prompt
- * and a provider {@link ChatModel} (Claude, OpenAI, Google Gemini, DeepSeek,
+ * and a provider {@link ChatModel} (Claude, OpenAI, Google Gemini,
  * Grok, Meta Muse, or a subscription CLI, via {@link AgentChatModelFactory})
  * into a runnable {@link AgentLoop}. This is the
  * single entry point the chat UI calls to run an agentic request.
@@ -253,14 +252,6 @@ public final class JMeterAgent {
     }
 
     /**
-     * Wires an agent against an existing DeepSeek service, using its configured
-     * OpenAI-compatible or Anthropic wire format.
-     */
-    public static JMeterAgent forDeepseek(DeepseekAiService deepseek) {
-        return JMeterAgentProviderResolver.forDeepseek(deepseek);
-    }
-
-    /**
      * Wires an agent against an existing Grok service using its OpenAI-compatible API.
      */
     public static JMeterAgent forGrok(GrokAiService grok) {
@@ -284,7 +275,7 @@ public final class JMeterAgent {
     }
 
     /**
-     * Wires an agent for Claude, OpenAI, Google Gemini, DeepSeek, Grok, Meta Muse,
+     * Wires an agent for Claude, OpenAI, Google Gemini, Grok, Meta Muse,
      * or a subscription CLI, or returns {@code null} for unsupported providers
      * (the caller then falls back to the plain, non-agentic chat path).
      */
@@ -302,7 +293,7 @@ public final class JMeterAgent {
     }
 
     /**
-     * The provider chat-model factory backing Claude, OpenAI, Google Gemini, DeepSeek,
+     * The provider chat-model factory backing Claude, OpenAI, Google Gemini,
      * Grok, Meta Muse, or a subscription CLI, or {@code null} for unsupported providers.
      * <p>
      * Exposed for callers that drive their own tool registry rather than the default

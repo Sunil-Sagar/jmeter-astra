@@ -104,9 +104,7 @@ public class CodeRefactorer {
             } else if ("google".equalsIgnoreCase(aiServiceType)) {
                 model = AiConfig.getProperty("google.default.model", "gemini-2.5-flash");
             } else if ("ollama".equalsIgnoreCase(aiServiceType)) {
-                model = AiConfig.getProperty("ollama.default.model", "deepseek-r1:1.5b");
-            } else if ("deepseek".equalsIgnoreCase(aiServiceType)) {
-                model = AiConfig.getProperty("deepseek.default.model", "deepseek-chat");
+                model = AiConfig.getProperty("ollama.default.model", "llama3.1");
             } else {
                 model = AiConfig.getProperty("openai.default.model", "gpt-4o");
             }

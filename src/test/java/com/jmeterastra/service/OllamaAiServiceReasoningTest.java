@@ -84,7 +84,7 @@ class OllamaAiServiceReasoningTest {
         // No Ollama server is running; the call must still return a handle
         // instead of throwing (the worker thread errors asynchronously).
         Runnable cancel = service.generateStreamResponse(
-                Collections.singletonList("hi"), "deepseek-r1:1.5b",
+                Collections.singletonList("hi"), "qwen3:8b",
                 token -> {}, reasoning -> {}, () -> {}, e -> {});
         assertNotNull(cancel);
         cancel.run();

@@ -39,12 +39,12 @@ class JevRouteCardTest {
                 List.of("get_tree_state"), 21), "claude-sonnet");
         JevRouteCard unavailable = new JevRouteCard(new AgentRequestRouter.Notice(
                 AgentRequestRouter.Decision.unavailable(), List.of("get_tree_state"), 21),
-                "deepseek:deepseek-chat");
+                "grok:grok-4.5");
 
         assertTrue(uncertain.getSummaryText().contains("Jev was uncertain"));
         assertTrue(uncertain.getDetailsText().contains("provided all Agent Mode tools"));
         assertTrue(unavailable.getSummaryText().contains("Jev unavailable"));
-        assertTrue(unavailable.getResponsibilityText().contains("DeepSeek"));
+        assertTrue(unavailable.getResponsibilityText().contains("Grok"));
         assertTrue(unavailable.getDetailsText().contains("Jev was unavailable"));
         assertFalse(unavailable.getDetailsText().contains("Jev selected"));
     }

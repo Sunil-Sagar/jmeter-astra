@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Unit tests for {@link JMeterAgent}'s provider selection and factory validation. */
 class JMeterAgentProviderWiringTest {
 
-    /** A provider with no tool-calling adapter (e.g. Ollama, Bedrock, DeepSeek, Grok). */
+    /** A provider with no tool-calling adapter (e.g. Ollama, Bedrock, Grok). */
     private static final class UnsupportedService implements AiService {
         @Override
         public String generateResponse(List<String> conversation) {

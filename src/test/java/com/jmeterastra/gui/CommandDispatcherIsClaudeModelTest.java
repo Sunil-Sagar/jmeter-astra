@@ -42,12 +42,6 @@ class CommandDispatcherIsClaudeModelTest {
     }
 
     @Test
-    void testDeepseekModel_returnsFalse() {
-        assertFalse(CommandDispatcher.isClaudeModel("deepseek:deepseek-chat"),
-                "DeepSeek model should not be treated as Claude");
-    }
-
-    @Test
     void testGoogleModel_returnsFalse() {
         assertFalse(CommandDispatcher.isClaudeModel("google:gemini-1.5"),
                 "Google model should not be treated as Claude");

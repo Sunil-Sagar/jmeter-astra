@@ -7,16 +7,17 @@ import com.openai.core.JsonValue;
 /**
  * Reads the non-standard {@code reasoning_content} field out of OpenAI SDK
  * response objects for OpenAI-compatible providers that return reasoning
- * (DeepSeek's deepseek-reasoner, xAI's reasoning Grok models). The openai-java
- * SDK has no typed accessor for it, so it arrives in the additional-properties
- * map of the streaming delta and of the completion message. There is no toggle
- * to send for these models - only reasoning text to display.
+ * (xAI's reasoning Grok models, and others that follow the same convention).
+ * The openai-java SDK has no typed accessor for it, so it arrives in the
+ * additional-properties map of the streaming delta and of the completion
+ * message. There is no toggle to send for these models - only reasoning text
+ * to display.
  */
-public final class DeepSeekReasoning {
+public final class ReasoningContentParser {
 
     public static final String REASONING_CONTENT_KEY = "reasoning_content";
 
-    private DeepSeekReasoning() {
+    private ReasoningContentParser() {
     }
 
     /**

@@ -91,8 +91,6 @@ class BedrockThinkingTest {
         assertNull(BedrockThinking.additionalFieldsFor(null, "anthropic.claude-opus-4-6-v1"));
         // display-only families send nothing even when reasoning-capable
         assertNull(BedrockThinking.additionalFieldsFor(
-                new ReasoningSettings(true, "high"), "deepseek.v3.2"));
-        assertNull(BedrockThinking.additionalFieldsFor(
                 new ReasoningSettings(true, "high"), "qwen.qwen3-32b-v1:0"));
     }
 
@@ -162,7 +160,6 @@ class BedrockThinkingTest {
                 new ReasoningSettings(true, "medium"), "amazon.nova-2-lite-v1:0"));
         // everything else keeps temperature
         assertFalse(BedrockThinking.dropsTemperature(on, "openai.gpt-oss-120b-1:0"));
-        assertFalse(BedrockThinking.dropsTemperature(on, "deepseek.v3.2"));
     }
 
     @Test

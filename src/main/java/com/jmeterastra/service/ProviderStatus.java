@@ -24,7 +24,6 @@ public final class ProviderStatus {
         boolean cloud = isApiKeyConfigured("anthropic.api.key")
                 || isApiKeyConfigured("openai.api.key")
                 || isApiKeyConfigured("google.api.key")
-                || isApiKeyConfigured("deepseek.api.key")
                 || isApiKeyConfigured("grok.api.key")
                 || isApiKeyConfigured("meta.api.key")
                 || isBedrockConfigured()

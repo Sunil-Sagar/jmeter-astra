@@ -7,7 +7,7 @@ import com.openai.models.chat.completions.ChatCompletionChunk;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import com.openai.models.chat.completions.ChatCompletionStreamOptions;
 import com.openai.models.models.Model;
-import com.jmeterastra.service.reasoning.DeepSeekReasoning;
+import com.jmeterastra.service.reasoning.ReasoningContentParser;
 import com.jmeterastra.service.reasoning.GrokReasoning;
 import com.jmeterastra.service.reasoning.ReasoningSettings;
 import com.jmeterastra.utils.AiConfig;
@@ -162,7 +162,7 @@ public class GrokAiService implements AiService {
             }
 
             ChatCompletion.Choice choice = chatCompletion.choices().get(0);
-            lastReasoning = DeepSeekReasoning.reasoningContent(
+            lastReasoning = ReasoningContentParser.reasoningContent(
                     choice.message()._additionalProperties());
             return choice.message().content().orElse("No content available");
 
@@ -231,7 +231,7 @@ public class GrokAiService implements AiService {
                                     if (!extraFields.isEmpty() && extraFieldsLogged.compareAndSet(false, true)) {
                                         log.info("Grok stream extra fields: {}", extraFields.keySet());
                                     }
-                                    String reasoning = DeepSeekReasoning.reasoningContent(extraFields);
+                                    String reasoning = ReasoningContentParser.reasoningContent(extraFields);
                                     if (reasoning != null && !reasoning.isEmpty()) {
                                         javax.swing.SwingUtilities.invokeLater(
                                                 () -> reasoningConsumer.accept(reasoning));

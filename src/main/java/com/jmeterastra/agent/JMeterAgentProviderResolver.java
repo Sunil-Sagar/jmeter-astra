@@ -8,7 +8,6 @@ import com.jmeterastra.agent.tool.ToolConfirmationGate;
 import com.jmeterastra.service.AiService;
 import com.jmeterastra.service.ClaudeService;
 import com.jmeterastra.service.CliSubscriptionAiService;
-import com.jmeterastra.service.DeepseekAiService;
 import com.jmeterastra.service.GoogleAiService;
 import com.jmeterastra.service.GrokAiService;
 import com.jmeterastra.service.MetaMuseAiService;
@@ -40,11 +39,6 @@ final class JMeterAgentProviderResolver {
                 openAi.getReasoningSettings()), JMeterAgent.maxIterations(), destructiveGate());
     }
 
-    static JMeterAgent forDeepseek(DeepseekAiService deepseek) {
-        return new JMeterAgent(factoryFor(deepseek, maxTokens()),
-                JMeterAgent.maxIterations(), destructiveGate());
-    }
-
     static JMeterAgent forGrok(GrokAiService grok) {
         return new JMeterAgent(factoryFor(grok, maxTokens()),
                 JMeterAgent.maxIterations(), destructiveGate());
@@ -73,9 +67,6 @@ final class JMeterAgentProviderResolver {
         }
         if (service instanceof GoogleAiService) {
             return forGoogle((GoogleAiService) service);
-        }
-        if (service instanceof DeepseekAiService) {
-            return forDeepseek((DeepseekAiService) service);
         }
         if (service instanceof GrokAiService) {
             return forGrok((GrokAiService) service);
@@ -124,9 +115,6 @@ final class JMeterAgentProviderResolver {
     }
 
     private static AgentChatModelFactory compatibleFactoryFor(AiService service, long maxTokens) {
-        if (service instanceof DeepseekAiService) {
-            return factoryFor((DeepseekAiService) service, maxTokens);
-        }
         if (service instanceof GrokAiService) {
             return factoryFor((GrokAiService) service, maxTokens);
         }
@@ -137,15 +125,6 @@ final class JMeterAgentProviderResolver {
             return JMeterAgent.cliFactory(((CliSubscriptionAiService) service).getProvider());
         }
         return null;
-    }
-
-    private static AgentChatModelFactory factoryFor(DeepseekAiService deepseek, long maxTokens) {
-        if (deepseek.isAnthropicFormat()) {
-            AnthropicClient client = deepseek.getAnthropicClient();
-            return JMeterAgent.claudeFactory(params -> client.messages().create(params),
-                    deepseek.getCurrentModel(), maxTokens, null);
-        }
-        return JMeterAgent.openAiCompatibleFactory(deepseek.getClient(), deepseek.getCurrentModel(), maxTokens);
     }
 
     private static AgentChatModelFactory factoryFor(GrokAiService grok, long maxTokens) {

@@ -45,7 +45,7 @@ public class OllamaAiService implements AiService {
                 AiConfig.getProperty("ollama.host", "http://localhost"),
                 AiConfig.getProperty("ollama.port", "11434"));
 
-        this.model = AiConfig.getProperty("ollama.default.model", "deepseek-r1:1.5b");
+        this.model = AiConfig.getProperty("ollama.default.model", "llama3.1");
         this.temperature = parseTemperature(AiConfig.getProperty("ollama.temperature", "0.5"));
         this.maxHistorySize = Integer.parseInt(AiConfig.getProperty("ollama.max.history.size", "10"));
         this.isThinkingModeEnabled = AiConfig.getProperty("ollama.thinking.mode", "DISABLED").equalsIgnoreCase("enabled");

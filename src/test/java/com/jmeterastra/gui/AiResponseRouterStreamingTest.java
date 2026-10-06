@@ -13,7 +13,6 @@ import com.jmeterastra.service.AiServiceHolder;
 import com.jmeterastra.service.ClaudeService;
 import com.jmeterastra.service.OllamaAiService;
 import com.jmeterastra.service.OpenAiService;
-import com.jmeterastra.service.DeepseekAiService;
 import com.jmeterastra.service.GoogleAiService;
 import com.jmeterastra.service.GrokAiService;
 import com.jmeterastra.service.MetaMuseAiService;
@@ -44,9 +43,6 @@ class AiResponseRouterStreamingTest {
 
     @Mock
     private OllamaAiService ollamaService;
-
-    @Mock
-    private DeepseekAiService deepseekService;
 
     @Mock
     private GoogleAiService googleService;
@@ -87,21 +83,13 @@ class AiResponseRouterStreamingTest {
             if (key.equals("openai.log.level")) return "";
             if (key.equals("ollama.host")) return "http://localhost";
             if (key.equals("ollama.port")) return "11434";
-            if (key.equals("ollama.default.model")) return "deepseek-r1:1.5b";
+            if (key.equals("ollama.default.model")) return "llama3.1";
             if (key.equals("ollama.temperature")) return "0.5";
             if (key.equals("ollama.max.history.size")) return "10";
             if (key.equals("ollama.thinking.mode")) return "DISABLED";
             if (key.equals("ollama.thinking.level")) return "MEDIUM";
             if (key.equals("ollama.request.timeout.seconds")) return "120";
             if (key.equals("ollama.system.prompt")) return "prompt";
-            if (key.equals("deepseek.api.key")) return "test-key";
-            if (key.equals("deepseek.api.format")) return "openai";
-            if (key.equals("deepseek.base.url")) return "https://api.deepseek.com";
-            if (key.equals("deepseek.default.model")) return "deepseek-chat";
-            if (key.equals("deepseek.temperature")) return "0.7";
-            if (key.equals("deepseek.max.tokens")) return "4096";
-            if (key.equals("deepseek.max.history.size")) return "10";
-            if (key.equals("deepseek.system.prompt")) return "prompt";
             return defaultValue;
         });
     }
@@ -119,7 +107,6 @@ class AiResponseRouterStreamingTest {
         holder.setClaudeService(claudeService);
         holder.setOpenAiService(openAiService);
         holder.setOllamaService(ollamaService);
-        holder.setDeepseekService(deepseekService);
         holder.setGoogleService(googleService);
         holder.setGrokService(grokService);
         holder.setMetaMuseService(metaMuseService);

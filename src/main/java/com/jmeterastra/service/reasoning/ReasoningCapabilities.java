@@ -10,7 +10,7 @@ import com.jmeterastra.utils.AiConfig;
 /**
  * Reasoning (thinking/effort) capabilities of a model, keyed by the prefixed
  * model id used in the model selector ({@code openai:}, {@code ollama:},
- * {@code deepseek:}, {@code google:}, {@code grok:}, {@code meta:},
+ * {@code google:}, {@code grok:}, {@code meta:},
  * {@code bedrock:}, bare = Anthropic).
  * <p>
  * Two layers, deliberately separate:
@@ -75,8 +75,7 @@ public final class ReasoningCapabilities {
      * off is provider semantics: Anthropic thinking is opt-in by API design,
      * OpenAI models with a {@code none} effort are toggleable, Google models
      * carry an explicit toggle flag in the data (e.g. Gemini Flash but not
-     * Pro), and always-reasoning models (o-series, gpt-5, Grok, deepseek-r1)
-     * get no toggle.
+     * Pro), and always-reasoning models (o-series, gpt-5, Grok) get no toggle.
      *
      * @param prefixedModel the model id from the selector (may be null)
      */
@@ -263,7 +262,7 @@ public final class ReasoningCapabilities {
 
     /**
      * The vendor family of a Bedrock model id after region stripping:
-     * {@code anthropic}, {@code amazon}, {@code openai}, {@code deepseek}, ...
+     * {@code anthropic}, {@code amazon}, {@code openai}, ...
      */
     static String bedrockFamily(String model) {
         String stripped = stripBedrockRegion(model);

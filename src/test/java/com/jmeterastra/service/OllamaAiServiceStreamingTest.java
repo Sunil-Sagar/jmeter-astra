@@ -38,7 +38,7 @@ class OllamaAiServiceStreamingTest {
             String defaultValue = invocation.getArgument(1);
             if (key.equals("ollama.host")) return "http://localhost";
             if (key.equals("ollama.port")) return "11434";
-            if (key.equals("ollama.default.model")) return "deepseek-r1:1.5b";
+            if (key.equals("ollama.default.model")) return "llama3.1";
             if (key.equals("ollama.temperature")) return "0.5";
             if (key.equals("ollama.max.history.size")) return "10";
             if (key.equals("ollama.thinking.mode")) return "DISABLED";
@@ -77,7 +77,7 @@ class OllamaAiServiceStreamingTest {
     void testGenerateStreamResponse_returnsNonNullRunnable() {
         Runnable cancelHandle = ollamaService.generateStreamResponse(
                 Collections.singletonList("Hello"),
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> {}
@@ -94,7 +94,7 @@ class OllamaAiServiceStreamingTest {
 
         Runnable cancelHandle = ollamaService.generateStreamResponse(
                 Collections.singletonList("Hello"),
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> interrupted.set(true)
@@ -147,7 +147,7 @@ class OllamaAiServiceStreamingTest {
     void testGenerateStreamResponse_handlesEmptyConversation() {
         Runnable cancelHandle = ollamaService.generateStreamResponse(
                 Collections.emptyList(),
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> {}
@@ -160,7 +160,7 @@ class OllamaAiServiceStreamingTest {
     void testGenerateStreamResponse_handlesNullConversation() {
         Runnable cancelHandle = ollamaService.generateStreamResponse(
                 null,
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> {}
@@ -178,7 +178,7 @@ class OllamaAiServiceStreamingTest {
 
         Runnable cancelHandle = ollamaService.generateStreamResponse(
                 largeConversation,
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> {}
@@ -196,7 +196,7 @@ class OllamaAiServiceStreamingTest {
 
         Runnable cancelHandle = ollamaService.generateStreamResponse(
                 conversationWithNulls,
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> {}
@@ -215,7 +215,7 @@ class OllamaAiServiceStreamingTest {
 
         Runnable cancelHandle = ollamaService.generateStreamResponse(
                 conversationWithEmpty,
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> {}
@@ -229,7 +229,7 @@ class OllamaAiServiceStreamingTest {
     @Test
     void testGenerateStreamResponse_setsModelWhenProvided() {
         String newModel = "mixtral:8x7b";
-        ollamaService.setModel("deepseek-r1:1.5b");  // set initial model
+        ollamaService.setModel("llama3.1");  // set initial model
 
         Runnable cancelHandle = ollamaService.generateStreamResponse(
                 Collections.singletonList("Hello"),
@@ -248,7 +248,7 @@ class OllamaAiServiceStreamingTest {
     void testGenerateStreamResponse_runsOnDaemonThread() {
         Runnable cancelHandle = ollamaService.generateStreamResponse(
                 Collections.singletonList("Hello"),
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> {}
@@ -263,14 +263,14 @@ class OllamaAiServiceStreamingTest {
     void testGenerateStreamResponse_consecutiveCallsReturnSeparateHandles() {
         Runnable handle1 = ollamaService.generateStreamResponse(
                 Collections.singletonList("Hello"),
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> {}
         );
         Runnable handle2 = ollamaService.generateStreamResponse(
                 Collections.singletonList("Hello again"),
-                "deepseek-r1:1.5b",
+                "llama3.1",
                 token -> {},
                 () -> {},
                 e -> {}

@@ -244,26 +244,6 @@
         "costIn" : 0.064,
         "costOut" : 0.256
       },
-      "deepseek.r1-v1:0" : {
-        "reasoning" : true,
-        "contextWindow" : 128000,
-        "costIn" : 1.35,
-        "costOut" : 5.4
-      },
-      "deepseek.v3-v1:0" : {
-        "reasoning" : true,
-        "toggle" : true,
-        "contextWindow" : 163840,
-        "costIn" : 0.58,
-        "costOut" : 1.68
-      },
-      "deepseek.v3.2" : {
-        "reasoning" : true,
-        "toggle" : true,
-        "contextWindow" : 163840,
-        "costIn" : 0.62,
-        "costOut" : 1.85
-      },
       "eu.amazon.nova-2-lite-v1:0" : {
         "reasoning" : true,
         "toggle" : true,
@@ -1115,12 +1095,6 @@
         "costIn" : 2.0,
         "costOut" : 10.0
       },
-      "us.deepseek.r1-v1:0" : {
-        "reasoning" : true,
-        "contextWindow" : 128000,
-        "costIn" : 1.35,
-        "costOut" : 5.4
-      },
       "us.meta.llama3-1-70b-instruct-v1:0" : {
         "contextWindow" : 128000,
         "costIn" : 0.72,
@@ -1645,43 +1619,6 @@
         "contextWindow" : 1048576,
         "costIn" : 0.1,
         "costOut" : 0.2
-      }
-    },
-    "deepseek" : {
-      "deepseek-flash" : {
-        "reasoning" : true,
-        "toggle" : true,
-        "effort" : [ "low", "high", "max" ],
-        "vision" : true,
-        "contextWindow" : 1000000,
-        "costIn" : 0.15,
-        "costOut" : 0.6
-      },
-      "deepseek-v4-flash" : {
-        "reasoning" : true,
-        "toggle" : true,
-        "effort" : [ "low", "high", "max" ],
-        "vision" : true,
-        "contextWindow" : 1000000,
-        "costIn" : 0.15,
-        "costOut" : 0.6
-      },
-      "deepseek-v4-flash-vision-exp" : {
-        "reasoning" : true,
-        "toggle" : true,
-        "effort" : [ "low", "high", "max" ],
-        "vision" : true,
-        "contextWindow" : 1000000,
-        "costIn" : 0.15,
-        "costOut" : 0.6
-      },
-      "deepseek-v4-pro" : {
-        "reasoning" : true,
-        "toggle" : true,
-        "effort" : [ "high", "max" ],
-        "contextWindow" : 1000000,
-        "costIn" : 0.435,
-        "costOut" : 0.87
       }
     },
     "anthropic" : {

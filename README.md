@@ -54,14 +54,14 @@
 
 | | |
 |:---|:---|
-| 🤖 **Multi-Model Chat** | Talk to API-backed Claude, OpenAI, Google Gemini, DeepSeek, Ollama, Grok (xAI), Meta Muse, or AWS Bedrock models, or use your CLI-managed ChatGPT/Codex or Claude Code account. |
+| 🤖 **Multi-Model Chat** | Talk to API-backed Claude, OpenAI, Google Gemini, Ollama, Grok (xAI), Meta Muse, or AWS Bedrock models, or use your CLI-managed ChatGPT/Codex or Claude Code account. |
 | ⚡ **Real-Time Streaming** | Watch supported API responses appear token-by-token with a **Stop** button to cancel anytime; CLI-backed requests return one completed answer and are cancellable too. |
 | 🖥️ **AI CLI Terminal** | Run **Claude Code**, **OpenAI Codex**, **OpenCode**, **Antigravity**, or **Grok CLI** directly in JMeter. This interactive terminal is separate from CLI-backed chat providers. |
 | 🧹 **Smart Refactoring** | Right-click in the JSR223 editor to refactor, format, or inject functions with AI. |
 | 🔍 **Context-Aware Commands** | `@this`, `@testplan`, `@optimize`, `@lint`, `@wrap`, `@code`, `@usage`, each tailored to your test plan. |
 | 🔔 **Audio Chime** | Optional sound notification when AI finishes responding. |
 | 🐾 **Companion Pet** | A draggable animated pet that reacts to your test runs: cheers on success, frowns on failures. Pick from quill, glim, peacock, or monkey. |
-| 🤖 **Agent Mode** | AI autonomously edits your test plan through 21 tools with API-backed Claude, OpenAI, Gemini, DeepSeek, Grok, Meta Muse, or the ChatGPT/Codex and Claude Code CLI providers. |
+| 🤖 **Agent Mode** | AI autonomously edits your test plan through 21 tools with API-backed Claude, OpenAI, Gemini, Grok, Meta Muse, or the ChatGPT/Codex and Claude Code CLI providers. |
 | **Jev Smart Routing** | Optional TypeSafe Jev intent routing gives Agent Mode a focused tool pack, with a visible route/confidence card and automatic full-tool fallback. |
 | 🔧 **Searchable Model Picker** | Search by model or provider, inspect context/cost/capabilities, pin favorites, reuse recent models, and hide non-chat clutter. |
 | ⚙️ **Fully Configurable** | Customize prompts, temperature, tokens, history, CLI timeouts/sandboxing, and more via JMeter properties. |
@@ -193,7 +193,7 @@ Uses the authentication managed by your local [Claude Code CLI](https://docs.ant
 |----------|-------------|---------|
 | `ollama.host` | Server host | `http://localhost` |
 | `ollama.port` | Server port | `11434` |
-| `ollama.default.model` | Default model | `deepseek-r1:1.5b` |
+| `ollama.default.model` | Default model | `llama3.1` |
 | `ollama.temperature` | Temperature (0.0-1.0) | `0.5` |
 | `ollama.max.history.size` | Conversation history size | `10` |
 | `ollama.thinking.mode` | Extended thinking (`ENABLED`/`DISABLED`) | `DISABLED` |
@@ -521,7 +521,7 @@ User prompts live in `~/.jmeter-ai/prompts.json` (unencrypted, so do not save cr
 
 Agent Mode lets the AI **autonomously edit your live JMeter test plan** through a tool-calling loop. Instead of just chatting about what you should do, the agent reads the tree, reasons about needed changes, calls tools to mutate elements, verifies the results, and iterates until the task is done, all inside the existing chat panel.
 
-> ⚠️ **Supported Agent Mode backends:** API-backed **Anthropic Claude**, **OpenAI**, **Google Gemini**, **DeepSeek**, **Grok**, and **Meta Muse**, plus the **ChatGPT / Codex CLI** and **Claude Code CLI** providers. Ollama and Bedrock currently fall back to plain chat.
+> ⚠️ **Supported Agent Mode backends:** API-backed **Anthropic Claude**, **OpenAI**, **Google Gemini**, **Grok**, and **Meta Muse**, plus the **ChatGPT / Codex CLI** and **Claude Code CLI** providers. Ollama and Bedrock currently fall back to plain chat.
 
 <div align="center">
 
@@ -538,7 +538,7 @@ Agent Mode is **off by default**. To turn it on:
 jmeter.ai.agent.enabled=true
 ```
 
-Select a **Claude**, **OpenAI**, **Google Gemini**, **DeepSeek**, **Grok**, or **Meta Muse** model from the dropdown. Then just type your request naturally in the chat box; if Agent Mode is enabled and a supported model is selected, the agent loop activates automatically.
+Select a **Claude**, **OpenAI**, **Google Gemini**, **Grok**, or **Meta Muse** model from the dropdown. Then just type your request naturally in the chat box; if Agent Mode is enabled and a supported model is selected, the agent loop activates automatically.
 
 > If a model from any other provider is selected, the request is handled by the regular (non-agentic) chat path.
 
@@ -546,7 +546,7 @@ All supported providers share the same tool registry, system prompt, safety gate
 
 > 💡 **OpenAI note**: temperature is left at the model default for agent runs, so reasoning models (`o1`, `o3`, `o4`, `gpt-5`) work without extra configuration. `jmeter.ai.agent.max.tokens` maps to `max_completion_tokens`. For **gpt-5.1 and later** (`gpt-5.6-terra`, `gpt-5.6-sol`, ...) the agent automatically sends `reasoning_effort=none`, because those models reject function tools on `/v1/chat/completions` while reasoning is on, so tool calling works out of the box.
 
-> 💡 **OpenAI-compatible provider note**: for DeepSeek, Grok, and Meta Muse agent runs, `reasoning_effort` is not sent; the vendor default applies. For Meta Muse, agent runs go through Chat Completions rather than the Responses API used for plain chat, so the Thoughts card is not populated during agent runs.
+> 💡 **OpenAI-compatible provider note**: for Grok and Meta Muse agent runs, `reasoning_effort` is not sent; the vendor default applies. For Meta Muse, agent runs go through Chat Completions rather than the Responses API used for plain chat, so the Thoughts card is not populated during agent runs.
 
 > 💡 **Thinking in Agent Mode (Claude & Gemini)**: when the Thinking checkbox is on, each agent turn's reasoning accumulates in a collapsed **Thoughts** card next to the tool-activity group. Agent loops pay the thinking budget on *every* iteration; keep the effort at `medium`, or pin an agent-only level with `jmeter.ai.agent.thinking.effort` (empty = follows the toolbar).
 
@@ -570,7 +570,7 @@ typesafe.timeout.seconds=15
 
 When enabled, every request shows a dedicated **Jev Smart Route** card before agent activity. It identifies the selected route, confidence, focused/total tool counts, and the chat model that still performs the work. Uncertain routing shows that all tools are being used; a TypeSafe failure shows that standard Agent Mode is being used.
 
-With `jmeter.ai.typesafe.agent.routing.expansion.enabled=true`, a focused pack also advertises an `expand_tools` escape hatch: if the model realises it needs a capability outside its pack, it can ask for more tools instead of giving up. Jev re-classifies the request with the model's stated need, the live tool set grows (never shrinks, capped by `expansion.max`, never beyond the full registry), and a second **Jev Expanded Tools** card lists what was added. The grown tool set is re-advertised to the provider on the model's next request, so newly added tools are actually callable — for the API-backed models (Claude, OpenAI, Gemini, DeepSeek, Grok, Meta Muse) and for the subscription CLIs, whose tool protocol is re-issued in the next prompt. Newly exposed destructive tools still require the usual confirmation.
+With `jmeter.ai.typesafe.agent.routing.expansion.enabled=true`, a focused pack also advertises an `expand_tools` escape hatch: if the model realises it needs a capability outside its pack, it can ask for more tools instead of giving up. Jev re-classifies the request with the model's stated need, the live tool set grows (never shrinks, capped by `expansion.max`, never beyond the full registry), and a second **Jev Expanded Tools** card lists what was added. The grown tool set is re-advertised to the provider on the model's next request, so newly added tools are actually callable — for the API-backed models (Claude, OpenAI, Gemini, Grok, Meta Muse) and for the subscription CLIs, whose tool protocol is re-issued in the next prompt. Newly exposed destructive tools still require the usual confirmation.
 
 With `jmeter.ai.typesafe.agent.triage.enabled=true` (independent of routing), Jev also classifies failures reported by `get_test_results`. Each unique failure signature — sampler label, response code, and a bounded message — gets one Choice judgment into a root-cause bucket (connection, timeout, 4xx/5xx, auth/session, assertion, script, config), capped at `triage.max.failures` signatures per run. The verdicts surface in a **Jev Failure Triage** card grouped by category with a dominant-cause callout, and an advisory summary is appended to the tool result so the chat model diagnoses from a categorized picture. Triage is advisory only: unavailable Jev, a missing key, or a clean run leaves the result untouched.
 
@@ -602,7 +602,6 @@ JmeterAstra already talks to more providers than Agent Mode currently supports; 
 | **Google Gemini** | ✅ Agent Mode | Native `FunctionDeclaration`/`functionCall` via the official `google-genai` SDK | Done |
 | **ChatGPT / Codex CLI** | ✅ Agent Mode | No native tool API; driven through a JSON tool protocol in the prompt over `codex exec` | Done |
 | **Claude Code CLI** | ✅ Agent Mode | No native tool API; same JSON tool protocol over `claude -p` | Done |
-| **DeepSeek** | ✅ Agent Mode | Yes: OpenAI-compatible `tools`/`tool_choice` (or Anthropic-compatible via `/anthropic`) | Done |
 | **Grok (xAI)** | ✅ Agent Mode | Yes: OpenAI-style function tools | Done |
 | **Meta "Muse"** | ✅ Agent Mode | Yes: OpenAI-compatible function `tool_calls` on Chat Completions | Done |
 | **Kimi K2/K3 (Moonshot AI)** | Not yet added | Yes: standard OpenAI-shaped `tools`/`tool_calls` | 🟢 Trivial (same "point `openai-java` at a new base URL" pattern) |
@@ -702,7 +701,7 @@ Each tool call and result is streamed to the chat in real time, so you can follo
 
 ### Examples
 
-Try these in the chat box with Agent Mode enabled and a Claude, OpenAI, Google Gemini, DeepSeek, Grok, or Meta Muse model selected:
+Try these in the chat box with Agent Mode enabled and a Claude, OpenAI, Google Gemini, Grok, or Meta Muse model selected:
 
 | Request | What the agent does |
 |---------|-------------------|
@@ -761,8 +760,7 @@ Effort levels shown in the dropdown come straight from the vendored per-model da
 | Bedrock: Claude | yes | low / medium / high / max (+ xhigh on newer) | Thinking JSON in `additionalModelRequestFields` (budget or adaptive) |
 | Bedrock: Nova 2 Lite | yes | low / medium / high | `reasoningConfig.maxReasoningEffort`; off by default; `high` drops temperature per AWS requirement |
 | Bedrock: OpenAI (gpt-oss, gpt-5.x) | gpt-5.x only | low / medium / high (+ none / xhigh / max on gpt-5.x) | `reasoning_effort` (snake_case) |
-| Bedrock: others (deepseek, qwen, glm, kimi, ...) | always on | - | No params sent; reasoning shown in the Thoughts card when streamed |
-| DeepSeek reasoner | always on | - | Reasoning is shown in the Thoughts card |
+| Bedrock: others (qwen, glm, kimi, ...) | always on | - | No params sent; reasoning shown in the Thoughts card when streamed |
 
 **Defaults via properties:**
 
@@ -973,7 +971,7 @@ JmeterAstra automatically hides non-chat models so you only see useful options:
 - **AWS Bedrock**: shows text-capable foundation models and active, account-authorized inference profiles matching `bedrock.model.providers`; unavailable profiles are hidden.
 - **Corporate gateways**: with `openai.base.url` or `anthropic.base.url` set, gateway-specific model names are kept (embedding models are still hidden), or listed verbatim from `openai.models` / `anthropic.models`.
 
-Default models: `claude-sonnet-4-6` · `gpt-4o` · `gemini-3.5-flash` · `deepseek-chat` · `deepseek-r1:1.5b` · `grok-4.5` · `anthropic.claude-3-5-sonnet-20241022-v2:0`
+Default models: `claude-sonnet-4-6` · `gpt-4o` · `gemini-3.5-flash` · `llama3.1` · `grok-4.5` · `anthropic.claude-3-5-sonnet-20241022-v2:0`
 
 ---
 

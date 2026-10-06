@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for {@link CommandDispatcher#isAgentCapableModel(String)}.
  * Agent mode supports providers with tool-calling adapters - Anthropic Claude
  * (non-prefixed ids), OpenAI ({@code openai:} prefix), Google Gemini
- * ({@code google:} prefix), DeepSeek, Grok, and Meta Muse; everything else
+ * ({@code google:} prefix), Grok, and Meta Muse; everything else
  * falls back to the plain chat path.
  */
 class CommandDispatcherIsAgentCapableModelTest {
@@ -44,11 +44,6 @@ class CommandDispatcherIsAgentCapableModelTest {
     @Test
     void testOllamaModel_returnsFalse() {
         assertFalse(CommandDispatcher.isAgentCapableModel("ollama:llama3.1"));
-    }
-
-    @Test
-    void testDeepseekModel_returnsTrue() {
-        assertTrue(CommandDispatcher.isAgentCapableModel("deepseek:deepseek-chat"));
     }
 
     @Test

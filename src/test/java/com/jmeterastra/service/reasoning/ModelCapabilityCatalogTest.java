@@ -52,7 +52,6 @@ class ModelCapabilityCatalogTest {
         assertEquals("openai", ModelCapabilityCatalog.catalogProviderOf("openai:gpt-5"));
         assertEquals("google", ModelCapabilityCatalog.catalogProviderOf("google:gemini-2.5-pro"));
         assertEquals("xai", ModelCapabilityCatalog.catalogProviderOf("grok:grok-4.5"));
-        assertEquals("deepseek", ModelCapabilityCatalog.catalogProviderOf("deepseek:deepseek-reasoner"));
         assertEquals("amazon-bedrock", ModelCapabilityCatalog.catalogProviderOf("bedrock:anthropic.claude-opus-4-8"));
         assertEquals("meta", ModelCapabilityCatalog.catalogProviderOf("meta:muse-spark-1.1"));
         assertNull(ModelCapabilityCatalog.catalogProviderOf("ollama:qwen3:8b"));
@@ -159,7 +158,6 @@ class ModelCapabilityCatalogTest {
         assertTrue(catalog.supportsReasoning("openai:o3"));
         assertTrue(catalog.supportsReasoning("google:gemini-2.5-pro"));
         assertTrue(catalog.supportsReasoning("grok:grok-4.5"));
-        assertTrue(catalog.supportsReasoning("deepseek:deepseek-v4-pro"));
         assertFalse(catalog.supportsReasoning("openai:gpt-4o"));
         assertTrue(catalog.supportsVision("openai:gpt-4o"));
         // Rich fields from the real data

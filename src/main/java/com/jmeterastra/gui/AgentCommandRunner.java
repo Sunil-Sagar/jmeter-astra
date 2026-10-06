@@ -110,8 +110,8 @@ final class AgentCommandRunner {
                     AiService service = cb.resolveAiService(selectedModel);
                     JMeterAgent agent = agentFactory.apply(service);
                     if (agent == null) {
-                        return finish("Agent mode currently supports Claude, OpenAI, Google Gemini, DeepSeek, Grok, "
-                                + "Meta Muse, Codex and Claude Code models only. "
+                        return finish("Agent mode currently supports Claude, OpenAI, Google Gemini, "
+                                + "Grok, Meta Muse, Codex and Claude Code models only. "
                                 + "Select one of those and retry.");
                     }
                     AgentLoop.AgentResult result;

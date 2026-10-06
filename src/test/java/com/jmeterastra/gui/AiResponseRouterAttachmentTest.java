@@ -10,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.jmeterastra.service.AiServiceHolder;
 import com.jmeterastra.service.BedrockAiService;
 import com.jmeterastra.service.ClaudeService;
-import com.jmeterastra.service.DeepseekAiService;
 import com.jmeterastra.service.GoogleAiService;
 import com.jmeterastra.service.GrokAiService;
 import com.jmeterastra.service.MetaMuseAiService;
@@ -37,7 +36,6 @@ class AiResponseRouterAttachmentTest {
     @Mock private ClaudeService claudeService;
     @Mock private OpenAiService openAiService;
     @Mock private OllamaAiService ollamaService;
-    @Mock private DeepseekAiService deepseekService;
     @Mock private GoogleAiService googleService;
     @Mock private GrokAiService grokService;
     @Mock private MetaMuseAiService metaMuseService;
@@ -56,7 +54,6 @@ class AiResponseRouterAttachmentTest {
         holder.setClaudeService(claudeService);
         holder.setOpenAiService(openAiService);
         holder.setOllamaService(ollamaService);
-        holder.setDeepseekService(deepseekService);
         holder.setGoogleService(googleService);
         holder.setGrokService(grokService);
         holder.setMetaMuseService(metaMuseService);

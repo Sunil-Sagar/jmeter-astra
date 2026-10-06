@@ -291,7 +291,7 @@ Here's the complete audit. I searched for every case variant (`Feather Wand`, `F
 ### 3. Properties / config (1 file, many lines)
 | File | Notes |
 |---|---|
-| `jmeter-ai-sample.properties` | ~24 occurrences — section header comment, all `*.system.prompt` default values (Claude, OpenAI, Google, DeepSeek, Grok, Bedrock, Meta), all `jmeter.ai.terminal.*.prompt` defaults, telemetry comments, `FEATHER_WAND_TELEMETRY` env var mention |
+| `jmeter-ai-sample.properties` | ~24 occurrences — section header comment, all `*.system.prompt` default values (Claude, OpenAI, Google, Grok, Bedrock, Meta), all `jmeter.ai.terminal.*.prompt` defaults, telemetry comments, `FEATHER_WAND_TELEMETRY` env var mention |
 
 ### 4. Java source — main (19 files)
 | File | What's there |

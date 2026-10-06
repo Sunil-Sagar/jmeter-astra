@@ -14,7 +14,6 @@ final class ModelDisplay {
     private static final String[][] PROVIDERS = {
         { "openai:", "OpenAI" },
         { "ollama:", "Ollama" },
-        { "deepseek:", "DeepSeek" },
         { "google:", "Google" },
         { "grok:", "Grok" },
         { "meta:", "Meta" },

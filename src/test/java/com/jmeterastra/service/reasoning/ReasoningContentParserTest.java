@@ -8,35 +8,35 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for {@link DeepSeekReasoning}: reading reasoning_content out of
+ * Unit tests for {@link ReasoningContentParser}: reading reasoning_content out of
  * additional-properties maps.
  */
-class DeepSeekReasoningTest {
+class ReasoningContentParserTest {
 
     @Test
     void extractsReasoningContent() {
         Map<String, JsonValue> props = Map.of(
-                DeepSeekReasoning.REASONING_CONTENT_KEY, JsonValue.from("chain of thought"));
-        assertEquals("chain of thought", DeepSeekReasoning.reasoningContent(props));
+                ReasoningContentParser.REASONING_CONTENT_KEY, JsonValue.from("chain of thought"));
+        assertEquals("chain of thought", ReasoningContentParser.reasoningContent(props));
     }
 
     @Test
     void returnsNullWhenAbsent() {
         Map<String, JsonValue> props = Map.of("other_field", JsonValue.from("value"));
-        assertNull(DeepSeekReasoning.reasoningContent(props));
+        assertNull(ReasoningContentParser.reasoningContent(props));
     }
 
     @Test
     void returnsNullForNullMap() {
-        assertNull(DeepSeekReasoning.reasoningContent(null));
+        assertNull(ReasoningContentParser.reasoningContent(null));
     }
 
     @Test
     void returnsNullForNonStringValue() {
         Map<String, JsonValue> props = Map.of(
-                DeepSeekReasoning.REASONING_CONTENT_KEY, JsonValue.from(42));
+                ReasoningContentParser.REASONING_CONTENT_KEY, JsonValue.from(42));
         // numeric reasoning_content is malformed - must not blow up
-        String result = DeepSeekReasoning.reasoningContent(props);
+        String result = ReasoningContentParser.reasoningContent(props);
         assertTrue(result == null || result.equals("42"));
     }
 }

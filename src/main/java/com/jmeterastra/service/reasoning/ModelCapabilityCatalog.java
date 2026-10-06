@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -237,8 +236,6 @@ public final class ModelCapabilityCatalog {
                 return "google";
             case "grok":
                 return "xai";
-            case "deepseek":
-                return "deepseek";
             case "bedrock":
                 return "amazon-bedrock";
             case "meta":
@@ -257,13 +254,9 @@ public final class ModelCapabilityCatalog {
             }
             JsonNode providersNode = MAPPER.readTree(in).path("providers");
             Map<String, Map<String, CapabilityInfo>> providers = new HashMap<>();
-            Iterator<Map.Entry<String, JsonNode>> providerIt = providersNode.fields();
-            while (providerIt.hasNext()) {
-                Map.Entry<String, JsonNode> provider = providerIt.next();
+            for (Map.Entry<String, JsonNode> provider : providersNode.properties()) {
                 Map<String, CapabilityInfo> models = new HashMap<>();
-                Iterator<Map.Entry<String, JsonNode>> modelIt = provider.getValue().fields();
-                while (modelIt.hasNext()) {
-                    Map.Entry<String, JsonNode> model = modelIt.next();
+                for (Map.Entry<String, JsonNode> model : provider.getValue().properties()) {
                     models.put(model.getKey(), parseCapability(model.getValue()));
                 }
                 providers.put(provider.getKey(), Collections.unmodifiableMap(models));

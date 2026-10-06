@@ -29,7 +29,7 @@ import java.util.TreeMap;
 public class TrimModelCapabilities {
 
     private static final Set<String> PROVIDERS = Set.of(
-            "openai", "anthropic", "google", "xai", "deepseek", "amazon-bedrock", "meta");
+            "openai", "anthropic", "google", "xai", "amazon-bedrock", "meta");
 
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {

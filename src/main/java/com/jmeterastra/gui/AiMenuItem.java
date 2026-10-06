@@ -8,7 +8,6 @@ import com.jmeterastra.service.AiService;
 import com.jmeterastra.service.OpenAiService;
 import com.jmeterastra.service.ClaudeService;
 import com.jmeterastra.service.OllamaAiService;
-import com.jmeterastra.service.DeepseekAiService;
 import com.jmeterastra.service.GoogleAiService;
 import com.jmeterastra.telemetry.Telemetry;
 import com.jmeterastra.telemetry.TelemetryFeature;
@@ -90,13 +89,6 @@ public class AiMenuItem extends JMenuItem implements ActionListener {
                 String model = AiConfig.getProperty("ollama.default.model", "llama3.1");
                 if (model != null && !model.isEmpty()) {
                     return new OllamaAiService();
-                }
-            } else if ("deepseek".equalsIgnoreCase(serviceType)) {
-                String apiKey = AiConfig.getProperty("deepseek.api.key", "");
-                String model = AiConfig.getProperty("deepseek.default.model", "deepseek-chat");
-                if (apiKey != null && !apiKey.isEmpty() && !apiKey.equals("YOUR_API_KEY")
-                        && model != null && !model.isEmpty()) {
-                    return new DeepseekAiService();
                 }
             } else if ("google".equalsIgnoreCase(serviceType)) {
                 String apiKey = AiConfig.getProperty("google.api.key", "");

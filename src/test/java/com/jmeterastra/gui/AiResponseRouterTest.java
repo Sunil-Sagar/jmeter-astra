@@ -9,7 +9,7 @@ import com.jmeterastra.service.AiServiceHolder;
 import com.jmeterastra.service.ClaudeService;
 import com.jmeterastra.service.OllamaAiService;
 import com.jmeterastra.service.OpenAiService;
-import com.jmeterastra.service.DeepseekAiService;
+
 import com.jmeterastra.service.GoogleAiService;
 import com.jmeterastra.service.GrokAiService;
 import com.jmeterastra.service.MetaMuseAiService;
@@ -34,9 +34,6 @@ class AiResponseRouterTest {
     private OllamaAiService ollamaService;
 
     @Mock
-    private DeepseekAiService deepseekService;
-
-    @Mock
     private GoogleAiService googleService;
 
     @Mock
@@ -57,7 +54,6 @@ class AiResponseRouterTest {
         holder.setClaudeService(claudeService);
         holder.setOpenAiService(openAiService);
         holder.setOllamaService(ollamaService);
-        holder.setDeepseekService(deepseekService);
         holder.setGoogleService(googleService);
         holder.setGrokService(grokService);
         holder.setMetaMuseService(metaMuseService);
@@ -99,17 +95,6 @@ class AiResponseRouterTest {
     }
 
     @Test
-    void testGetAiResponse_Deepseek() {
-        when(deepseekService.generateResponse(history)).thenReturn("deepseek response");
-
-        String response = router.getAiResponse("deepseek:deepseek-chat", history);
-
-        assertEquals("deepseek response", response);
-        verify(deepseekService).setModel("deepseek-chat");
-        verify(deepseekService).generateResponse(history);
-    }
-
-    @Test
     void testGetAiResponse_Google_NotNull() {
         when(googleService.generateResponse(history)).thenReturn("google response");
 
@@ -126,7 +111,6 @@ class AiResponseRouterTest {
         holder.setClaudeService(claudeService);
         holder.setOpenAiService(openAiService);
         holder.setOllamaService(ollamaService);
-        holder.setDeepseekService(deepseekService);
         // google is left null
         AiResponseRouter nullGoogleRouter = new AiResponseRouter(holder);
         String response = nullGoogleRouter.getAiResponse("google:gemini-1.5", history);
@@ -208,7 +192,6 @@ class AiResponseRouterTest {
         holder.setClaudeService(claudeService);
         holder.setOpenAiService(openAiService);
         holder.setOllamaService(ollamaService);
-        holder.setDeepseekService(deepseekService);
         // bedrock is left null
         AiResponseRouter nullBedrockRouter = new AiResponseRouter(holder);
         String response = nullBedrockRouter.getAiResponse("bedrock:anthropic.claude-3-5-sonnet-20241022-v2:0", history);
@@ -233,7 +216,6 @@ class AiResponseRouterTest {
     void testResolveAiService() {
         assertEquals(openAiService, router.resolveAiService("openai:gpt-4o"));
         assertEquals(ollamaService, router.resolveAiService("ollama:llama3.1"));
-        assertEquals(deepseekService, router.resolveAiService("deepseek:deepseek-chat"));
         assertEquals(googleService, router.resolveAiService("google:gemini-1.5"));
         assertEquals(grokService, router.resolveAiService("grok:grok-2"));
         assertEquals(metaMuseService, router.resolveAiService("meta:muse-spark-1.1"));
@@ -247,7 +229,6 @@ class AiResponseRouterTest {
         holder.setClaudeService(claudeService);
         holder.setOpenAiService(openAiService);
         holder.setOllamaService(ollamaService);
-        holder.setDeepseekService(deepseekService);
         // google is left null
         AiResponseRouter nullGoogleRouter = new AiResponseRouter(holder);
         Runnable cancelHandle = nullGoogleRouter.generateStreamResponse("google:gemini-1.5", history, token -> {}, () -> {}, err -> {});

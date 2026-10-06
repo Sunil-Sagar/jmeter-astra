@@ -119,7 +119,7 @@ public class BedrockAiService implements AiService {
                     .build();
         } else {
             log.info("Bedrock credentials not explicitly set, using default credential chain");
-            DefaultCredentialsProvider defaultCreds = DefaultCredentialsProvider.create();
+            DefaultCredentialsProvider defaultCreds = DefaultCredentialsProvider.builder().build();
             syncClient = BedrockRuntimeClient.builder()
                     .credentialsProvider(defaultCreds).region(region)
                     .httpClient(UrlConnectionHttpClient.builder().build())

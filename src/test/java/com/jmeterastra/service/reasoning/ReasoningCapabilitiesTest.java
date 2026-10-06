@@ -99,7 +99,7 @@ class ReasoningCapabilitiesTest {
 
     @Test
     void testSupportsThinkingToggle_ollamaOptimisticDefault() {
-        assertTrue(ReasoningCapabilities.supportsThinkingToggle("ollama:deepseek-r1:1.5b"));
+        assertTrue(ReasoningCapabilities.supportsThinkingToggle("ollama:llama3.1"));
         assertTrue(ReasoningCapabilities.supportsThinkingToggle("ollama:qwen3:8b"));
     }
 
@@ -141,8 +141,6 @@ class ReasoningCapabilitiesTest {
         assertTrue(ReasoningCapabilities.supportsThinkingToggle("bedrock:openai.gpt-5.4"));
         // gpt-oss always reasons (no "none") - no toggle
         assertFalse(ReasoningCapabilities.supportsThinkingToggle("bedrock:openai.gpt-oss-120b-1:0"));
-        // display-only families
-        assertFalse(ReasoningCapabilities.supportsThinkingToggle("bedrock:deepseek.v3.2"));
     }
 
     @Test
@@ -155,7 +153,6 @@ class ReasoningCapabilitiesTest {
                 ReasoningCapabilities.effortLevels("bedrock:openai.gpt-5.4"));
         assertEquals(List.of("low", "medium", "high", "max"),
                 ReasoningCapabilities.effortLevels("bedrock:anthropic.claude-sonnet-4-6"));
-        assertTrue(ReasoningCapabilities.effortLevels("bedrock:deepseek.v3.2").isEmpty());
     }
 
     @Test
@@ -167,14 +164,12 @@ class ReasoningCapabilitiesTest {
         assertEquals("anthropic", ReasoningCapabilities.bedrockFamily("anthropic.claude-fable-5"));
         assertEquals("amazon", ReasoningCapabilities.bedrockFamily("global.amazon.nova-2-lite-v1:0"));
         assertEquals("openai", ReasoningCapabilities.bedrockFamily("openai.gpt-oss-20b-1:0"));
-        assertEquals("deepseek", ReasoningCapabilities.bedrockFamily("deepseek.v3.2"));
     }
 
     @Test
-    void testSupportsThinkingToggle_grokDeepseekMetaNeverToggleable() {
+    void testSupportsThinkingToggle_grokMetaNeverToggleable() {
         // reasoning-capable but always on (or display-only) -> no toggle
         assertFalse(ReasoningCapabilities.supportsThinkingToggle("grok:grok-4.5"));
-        assertFalse(ReasoningCapabilities.supportsThinkingToggle("deepseek:deepseek-reasoner"));
         assertFalse(ReasoningCapabilities.supportsThinkingToggle("meta:muse-large"));
     }
 
@@ -221,7 +216,6 @@ class ReasoningCapabilitiesTest {
     void testEffortLevels_bedrockAndDisplayOnly() {
         assertEquals(List.of("low", "medium", "high", "xhigh", "max"),
                 ReasoningCapabilities.effortLevels("bedrock:anthropic.claude-opus-4-8"));
-        assertTrue(ReasoningCapabilities.effortLevels("deepseek:deepseek-reasoner").isEmpty());
         assertTrue(ReasoningCapabilities.effortLevels(null).isEmpty());
         assertTrue(ReasoningCapabilities.effortLevels("meta:muse-large").isEmpty());
     }

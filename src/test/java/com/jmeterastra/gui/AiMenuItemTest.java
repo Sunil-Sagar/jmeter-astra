@@ -41,8 +41,6 @@ class AiMenuItemTest {
             if (key.equals("claude.default.model")) return configuredModel;
             if (key.equals("anthropic.model")) return configuredModel;
             if (key.equals("ollama.default.model")) return configuredModel;
-            if (key.equals("deepseek.api.key")) return configuredApiKey;
-            if (key.equals("deepseek.default.model")) return configuredModel;
             if (key.equals("google.api.key")) return configuredApiKey;
             if (key.equals("google.default.model")) return configuredModel;
             return defaultValue;
@@ -85,18 +83,6 @@ class AiMenuItemTest {
     void testConstructorWithOllama() {
         configuredServiceType = "ollama";
         configuredModel = "llama3.1";
-
-        JPanel parent = new JPanel();
-        AiMenuItem item = new AiMenuItem(parent);
-
-        assertNotNull(item);
-    }
-
-    @Test
-    void testConstructorWithDeepseek() {
-        configuredServiceType = "deepseek";
-        configuredApiKey = "test-key";
-        configuredModel = "deepseek-chat";
 
         JPanel parent = new JPanel();
         AiMenuItem item = new AiMenuItem(parent);

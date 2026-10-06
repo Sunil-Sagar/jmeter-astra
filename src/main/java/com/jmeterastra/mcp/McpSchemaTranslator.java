@@ -3,7 +3,6 @@ package com.jmeterastra.mcp;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,9 +50,7 @@ public final class McpSchemaTranslator {
         JsonNode properties = schema.path("properties");
         Set<String> required = requiredNames(schema);
 
-        Iterator<Map.Entry<String, JsonNode>> fields = properties.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> field = fields.next();
+        for (Map.Entry<String, JsonNode> field : properties.properties()) {
             builder.addParameter(toParameter(field.getKey(), field.getValue(),
                     required.contains(field.getKey())));
         }

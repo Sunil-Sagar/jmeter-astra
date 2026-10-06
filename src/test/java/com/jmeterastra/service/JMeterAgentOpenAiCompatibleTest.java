@@ -5,7 +5,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import com.jmeterastra.agent.JMeterAgent;
 
-import com.anthropic.client.AnthropicClient;
 import com.openai.client.OpenAIClient;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -20,24 +19,11 @@ class JMeterAgentOpenAiCompatibleTest {
                 0.7f, 10, 4096L, "test");
         MetaMuseAiService metaMuse = new MetaMuseAiService(mock(OpenAIClient.class), "http://localhost",
                 "muse-spark-1.1", 0.7f, 10, 4096L, "test");
-        DeepseekAiService deepseek = new DeepseekAiService(mock(OpenAIClient.class), null, false,
-                "http://localhost", "deepseek-chat", 0.7f, 10, 4096L, "test");
 
         assertNotNull(JMeterAgent.forService(grok));
         assertNotNull(JMeterAgent.forService(metaMuse));
-        assertNotNull(JMeterAgent.forService(deepseek));
         assertNotNull(JMeterAgent.chatModelFactoryFor(grok));
         assertNotNull(JMeterAgent.chatModelFactoryFor(metaMuse));
-        assertNotNull(JMeterAgent.chatModelFactoryFor(deepseek));
-    }
-
-    @Test
-    void deepseekAnthropicFormat_isAvailableToAgentMode() {
-        DeepseekAiService deepseek = new DeepseekAiService(null, mock(AnthropicClient.class), true,
-                "http://localhost", "deepseek-chat", 0.7f, 10, 4096L, "test");
-
-        assertNotNull(JMeterAgent.forService(deepseek));
-        assertNotNull(JMeterAgent.chatModelFactoryFor(deepseek));
     }
 
     @Test

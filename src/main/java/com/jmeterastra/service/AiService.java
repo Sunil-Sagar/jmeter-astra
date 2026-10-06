@@ -61,7 +61,7 @@ public interface AiService {
 
     /**
      * Returns and clears the reasoning text captured from the last non-streaming
-     * response (e.g. a Claude thinking block or a DeepSeek reasoning_content
+     * response (e.g. a Claude thinking block or an OpenAI-compatible provider's
      * field), or null when there was none. Used by the UI to render the
      * collapsible thinking card on the non-streaming path.
      */

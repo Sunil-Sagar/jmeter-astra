@@ -59,8 +59,7 @@ class JmeterAstraToolbarTest {
     void toggleKeyStroke_isShiftAWithMenuShortcut() {
         KeyStroke ks = JmeterAstraToolbar.toggleKeyStroke();
         assertEquals(KeyEvent.VK_A, ks.getKeyCode());
-        assertTrue((ks.getModifiers() & InputEvent.SHIFT_DOWN_MASK) != 0
-                || (ks.getModifiers() & InputEvent.SHIFT_MASK) != 0);
+        assertTrue((ks.getModifiers() & InputEvent.SHIFT_DOWN_MASK) != 0);
     }
 
     @Test

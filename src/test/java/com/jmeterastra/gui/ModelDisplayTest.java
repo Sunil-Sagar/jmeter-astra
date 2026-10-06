@@ -17,8 +17,6 @@ class ModelDisplayTest {
             ModelDisplay.parse("openai:gpt-4o"));
         assertArrayEquals(new String[] { "llama3.1", "Ollama" },
             ModelDisplay.parse("ollama:llama3.1"));
-        assertArrayEquals(new String[] { "deepseek-chat", "DeepSeek" },
-            ModelDisplay.parse("deepseek:deepseek-chat"));
         assertArrayEquals(new String[] { "gemini-2.5-flash", "Google" },
             ModelDisplay.parse("google:gemini-2.5-flash"));
         assertArrayEquals(new String[] { "grok-2", "Grok" },
