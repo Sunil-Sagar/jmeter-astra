@@ -79,7 +79,7 @@ public class AiMenuItem extends JMenuItem implements ActionListener {
                 String model = firstConfigured(
                         AiConfig.getProperty("anthropic.default.model", ""),
                         AiConfig.getProperty("claude.default.model", ""),
-                        AiConfig.getProperty("anthropic.model", ""));
+                        "claude-3-sonnet-20240229");
                 boolean apiKeyOk = apiKey != null && !apiKey.isEmpty() && !apiKey.equals("YOUR_API_KEY");
                 if ((apiKeyOk || GatewayConfig.hasAnthropicGatewayCredentials())
                         && model != null && !model.isEmpty()) {

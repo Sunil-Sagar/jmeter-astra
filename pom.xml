@@ -474,5 +474,28 @@
                 </plugins>
             </build>
         </profile>
+        <!-- Build-time-only code structure/wiring analysis. GPL-3.0 licensed; never
+             shipped as a dependency or bundled in jmeter-agent-*.jar. Run with:
+             mvn verify -Pjqassistant   then   mvn jqassistant:server -->
+        <profile>
+            <id>jqassistant</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.buschmais.jqassistant</groupId>
+                        <artifactId>jqassistant-maven-plugin</artifactId>
+                        <version>2.9.0</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>scan</goal>
+                                    <goal>analyze</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>

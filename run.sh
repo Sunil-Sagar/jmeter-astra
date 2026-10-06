@@ -1,10 +1,11 @@
 #!/bin/bash
 
-mvn clean package
+mvn clean package -DskipTests
 
-if [ -f /Users/naveenkumar/Tools/apache-jmeter-5.6.3/lib/ext/jmeter-agent-2.0.8-jar-with-dependencies.jar ]; then
-    rm /Users/naveenkumar/Tools/apache-jmeter-5.6.3/lib/ext/jmeter-agent-2.0.8-jar-with-dependencies.jar
-fi
+VERSION=$(grep -m1 '<version>' pom.xml | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+JMETER_HOME="/Users/naveenkumar/Tools/apache-jmeter-5.6.3"
 
-cp target/jmeter-agent-2.0.8-jar-with-dependencies.jar /Users/naveenkumar/Tools/apache-jmeter-5.6.3/lib/ext
+rm -f "$JMETER_HOME/lib/ext/jmeter-agent-"*.jar
+
+cp "target/jmeter-agent-${VERSION}.jar" "$JMETER_HOME/lib/ext"
 

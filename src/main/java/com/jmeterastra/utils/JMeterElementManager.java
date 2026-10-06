@@ -205,8 +205,6 @@ public class JMeterElementManager {
         ELEMENT_CLASS_MAP.put("jmespathextractor",
                 new ElementClassInfo("org.apache.jmeter.extractor.json.jmespath.JMESPathExtractor",
                         "org.apache.jmeter.extractor.json.jmespath.gui.JMESPathExtractorGui"));
-        ELEMENT_CLASS_MAP.put("jsr223postprocessor", new ElementClassInfo(
-                "org.apache.jmeter.extractor.JSR223PostProcessor", "org.apache.jmeter.testbeans.gui.TestBeanGUI"));
         ELEMENT_CLASS_MAP.put("debugpostprocessor", new ElementClassInfo(
                 "org.apache.jmeter.extractor.DebugPostProcessor", "org.apache.jmeter.testbeans.gui.TestBeanGUI"));
         ELEMENT_CLASS_MAP.put("jdbcpostprocessor",
@@ -294,8 +292,6 @@ public class JMeterElementManager {
                 "org.apache.jmeter.reporters.gui.SummariserGui"));
         ELEMENT_CLASS_MAP.put("graphvisualizer", new ElementClassInfo("org.apache.jmeter.reporters.ResultCollector",
                 "org.apache.jmeter.visualizers.GraphVisualizer"));
-        ELEMENT_CLASS_MAP.put("jsr223listener", new ElementClassInfo("org.apache.jmeter.visualizers.JSR223Listener",
-                "org.apache.jmeter.testbeans.gui.TestBeanGUI"));
         ELEMENT_CLASS_MAP.put("mailervisualizer", new ElementClassInfo(
                 "org.apache.jmeter.reporters.MailerResultCollector", "org.apache.jmeter.visualizers.MailerVisualizer"));
         ELEMENT_CLASS_MAP.put("resptimegraph", new ElementClassInfo("org.apache.jmeter.reporters.ResultCollector",
