@@ -1,0 +1,445 @@
+package com.jmeterastra.gui;
+
+import com.jmeterastra.agent.JMeterAgent;
+import com.jmeterastra.lint.LintCommandHandler;
+import com.jmeterastra.optimizer.OptimizeRequestHandler;
+import com.jmeterastra.service.AiService;
+import com.jmeterastra.telemetry.Telemetry;
+import com.jmeterastra.telemetry.TelemetryFeature;
+import com.jmeterastra.usage.UsageCommandHandler;
+import com.jmeterastra.utils.JMeterElementRequestHandler;
+import com.jmeterastra.utils.AiConfig;
+import com.jmeterastra.utils.RateLimitErrors;
+import com.jmeterastra.wrap.WrapCommandHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+
+import javax.swing.SwingWorker;
+
+/**
+ * Handles dispatching of user messages and special @ commands to the
+ * appropriate command handlers, running background work via SwingWorker.
+ */
+public class CommandDispatcher {
+    private static final Logger log = LoggerFactory.getLogger(CommandDispatcher.class);
+
+    private final CommandCallback cb;
+    private final TreeActivityGlowController glowController = new TreeActivityGlowController();
+    private final Function<AiService, JMeterAgent> agentFactory;
+    private com.jmeterastra.record.RecordingPromptRouter recordingRouter;
+
+    public CommandDispatcher(CommandCallback callback) {
+        this(callback, JMeterAgent::forService);
+    }
+
+    /** Package-private so tests can substitute the agent wired for a resolved {@link AiService}. */
+    CommandDispatcher(CommandCallback callback, Function<AiService, JMeterAgent> agentFactory) {
+        this.cb = callback;
+        this.agentFactory = agentFactory;
+    }
+
+    private static String chatErrorMessage(Exception e) {
+        if (RateLimitErrors.isRateLimited(e)) {
+            return "Error: " + RateLimitErrors.describe(e, false);
+        }
+        return "Sorry, I encountered an error while processing your request. Please try again.";
+    }
+
+    /**
+     * Built on first use rather than in the constructor: Record Mode is off by default, and
+     * its artifact store reads configuration that is not present outside a JMeter process.
+     */
+    private com.jmeterastra.record.RecordingPromptRouter recordingRouter() {
+        if (recordingRouter == null) {
+            com.jmeterastra.record.RecordingSessionController controller =
+                    com.jmeterastra.record.RecordingSessionController.getInstance();
+            recordingRouter = new com.jmeterastra.record.RecordingPromptRouter(controller,
+                    new com.jmeterastra.record.DefaultRecordingWorkflow(controller,
+                            new com.jmeterastra.record.RecordingArtifactStore()));
+        }
+        return recordingRouter;
+    }
+
+    /**
+     * Entry point: processes a raw user message, dispatches special commands or
+     * falls back to a general AI request.
+     *
+     * @param message the trimmed user message
+     */
+    public void dispatch(String message) {
+        if (message.isEmpty()) {
+            return;
+        }
+
+        log.info("Sending user message: {}", message);
+        cb.appendUserMessage("You: " + message);
+        cb.addToConversationHistory(message);
+        cb.clearMessageField();
+        cb.appendLoadingIndicator();
+
+        // An armed Record Mode session consumes the next message as its recording brief.
+        if (com.jmeterastra.record.RecordingSessionController.getInstance().getSnapshot()
+                .state() == com.jmeterastra.record.RecordingSessionState.ARMED
+                && recordingRouter().route(message, cb)) {
+            Telemetry.record(TelemetryFeature.RECORDING_RUN);
+            return;
+        }
+
+        switch (getCommand(message)) {
+            case "@this":
+                Telemetry.record(TelemetryFeature.CMD_THIS);
+                handleThisCommand();
+                return;
+            case "@optimize":
+                Telemetry.record(TelemetryFeature.CMD_OPTIMIZE);
+                handleOptimizeCommand();
+                return;
+            case "@code":
+                cb.appendRedMessage(
+                        "The @code command is disabled. Please use the right-click context menu in the JSR223 editor instead.");
+                cb.setInputEnabled(true);
+                return;
+            case "@lint":
+                Telemetry.record(TelemetryFeature.CMD_LINT);
+                handleLintCommand(message);
+                return;
+            case "@wrap":
+                Telemetry.record(TelemetryFeature.CMD_WRAP);
+                handleWrapCommand();
+                return;
+            case "@usage":
+                Telemetry.record(TelemetryFeature.CMD_USAGE);
+                handleUsageCommand();
+                return;
+            case "@testplan":
+                Telemetry.record(TelemetryFeature.CMD_TESTPLAN);
+                handleTestPlanCommand(message);
+                return;
+            default:
+                break;
+        }
+
+        // Tier 2: agentic tool-calling loop (feature-flagged; Claude, OpenAI, Google Gemini, DeepSeek, Grok and Meta Muse).
+        if (shouldUseAgent(JMeterAgent.isEnabled(), cb.isAgentModeSelected(), cb.getSelectedModel())) {
+            Telemetry.record(TelemetryFeature.AGENT_RUN);
+            new AgentCommandRunner(cb, glowController, agentFactory).run(message);
+            return;
+        }
+
+        Telemetry.record(TelemetryFeature.CHAT_MESSAGE);
+
+        log.info("Checking if message is an element request: '{}'", message);
+        cb.setInputEnabled(false);
+
+        String elementResponse = JMeterElementRequestHandler.processElementRequest(message);
+        if (elementResponse != null && !elementResponse.contains("I couldn't understand what to do with")) {
+            log.info("Detected element request");
+            cb.removeLoadingIndicator();
+            cb.processAiResponse(elementResponse);
+            cb.setInputEnabled(true);
+            return;
+        }
+
+        if (AiConfig.isStreamingEnabled()) {
+            log.info("Processing as streaming AI request");
+            cb.showStopButton();
+
+            StringBuilder fullResponse = new StringBuilder();
+
+            Runnable cancelHandle = cb.getAiStreamResponse(message,
+                token -> {
+                    fullResponse.append(token);
+                    cb.appendStreamToken(token);
+                },
+                () -> {
+                    String response = fullResponse.toString();
+                    cb.onStreamComplete(response);
+                    cb.addToConversationHistory(response);
+                },
+                e -> cb.onStreamError("Error getting AI stream response", e, chatErrorMessage(e))
+            );
+        } else {
+            log.info("Processing as regular AI request");
+            new SwingWorker<String, Void>() {
+                @Override
+                protected String doInBackground() throws Exception {
+                    return cb.getAiResponse(message);
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        String response = get();
+                        cb.onWorkerSuccess(response);
+                        cb.addToConversationHistory(response);
+                    } catch (InterruptedException | ExecutionException e) {
+                        cb.onWorkerError("Error getting AI response", e, chatErrorMessage(e));
+                    }
+                }
+            }.execute();
+        }
+    }
+
+    private void handleTestPlanCommand(String message) {
+        log.info("Processing @testplan command");
+        cb.setLastCommandType("NONE");
+        cb.setInputEnabled(false);
+
+        // Extract the user prompt by stripping out the "@testplan" prefix
+        String prompt = "";
+        int spaceIndex = message.trim().indexOf(' ');
+        if (spaceIndex != -1) {
+            prompt = message.trim().substring(spaceIndex + 1).trim();
+        }
+        if (prompt.isEmpty()) {
+            prompt = "Please summarize this test plan and give me key recommendations.";
+        }
+
+        final String userPrompt = prompt;
+        final java.util.List<String> history = cb.getConversationHistory();
+        final int lastIndex = history.size() - 1;
+        final String originalUserMessage = history.get(lastIndex);
+
+        if (com.jmeterastra.utils.AiConfig.isStreamingEnabled()) {
+            cb.showStopButton();
+            StringBuilder fullResponse = new StringBuilder();
+
+            // Prepare the combined prompt and temporarily inject it into the conversation history
+            String testPlanContext = com.jmeterastra.claudecode.TestPlanSerializer.serializeTestPlan();
+            String combinedPrompt = "Here is the context of the current JMeter test plan:\n\n"
+                    + testPlanContext + "\n\n"
+                    + "Based on the above test plan, please answer: " + userPrompt;
+            history.set(lastIndex, combinedPrompt);
+
+            cb.getAiStreamResponse(
+                userPrompt,
+                token -> {
+                    fullResponse.append(token);
+                    cb.appendStreamToken(token);
+                },
+                () -> {
+                    String response = fullResponse.toString();
+                    cb.onStreamComplete(response);
+                    cb.addToConversationHistory(response);
+                },
+                e -> cb.onStreamError("Error getting AI stream response", e, chatErrorMessage(e))
+            );
+
+            // Restore the original user message in the conversation history immediately
+            // so subsequent turns don't bloat the history with the massive tree
+            history.set(lastIndex, originalUserMessage);
+        } else {
+            new SwingWorker<String, Void>() {
+                @Override
+                protected String doInBackground() throws Exception {
+                    String testPlanContext = com.jmeterastra.claudecode.TestPlanSerializer.serializeTestPlan();
+                    String combinedPrompt = "Here is the context of the current JMeter test plan:\n\n"
+                            + testPlanContext + "\n\n"
+                            + "Based on the above test plan, please answer: " + userPrompt;
+                    
+                    history.set(lastIndex, combinedPrompt);
+                    try {
+                        return cb.getAiResponse(userPrompt);
+                    } finally {
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            history.set(lastIndex, originalUserMessage);
+                        });
+                    }
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        String response = get();
+                        cb.onWorkerSuccess(response);
+                        cb.addToConversationHistory(response);
+                    } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+                        cb.onWorkerError("Error getting AI response", e, chatErrorMessage(e));
+                    }
+                }
+            }.execute();
+        }
+    }
+
+    private void handleThisCommand() {
+        log.info("Processing @this command");
+        cb.setLastCommandType("NONE");
+        cb.setInputEnabled(false);
+
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                String elementInfo = cb.getCurrentElementInfo();
+                return elementInfo != null ? elementInfo
+                        : "No element is currently selected in the test plan. Please select an element and try again.";
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    cb.onWorkerSuccess(get());
+                } catch (InterruptedException | ExecutionException e) {
+                    cb.onWorkerError("Error getting element info", e,
+                            "Sorry, I encountered an error while getting element information. Please try again.");
+                }
+            }
+        }.execute();
+    }
+
+    private void handleOptimizeCommand() {
+        log.info("Processing @optimize command");
+        cb.setLastCommandType("NONE");
+        cb.setInputEnabled(false);
+
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                String selectedModel = cb.getSelectedModel();
+                AiService serviceToUse = cb.resolveAiService(selectedModel);
+                return OptimizeRequestHandler.analyzeAndOptimizeSelectedElement(serviceToUse);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    cb.onWorkerSuccess(get());
+                } catch (InterruptedException | ExecutionException e) {
+                    cb.onWorkerError("Error getting optimization suggestions", e,
+                            "Sorry, I encountered an error while getting optimization suggestions. Please try again.");
+                }
+            }
+        }.execute();
+    }
+
+    private void handleLintCommand(String message) {
+        log.info("Processing @lint command");
+        cb.setLastCommandType("LINT");
+        cb.setInputEnabled(false);
+
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                String selectedModel = cb.getSelectedModel();
+                if (selectedModel == null) {
+                    return "Please select a model first.";
+                }
+                AiService serviceToUse = cb.resolveAiService(selectedModel);
+                LintCommandHandler lintCommandHandler = new LintCommandHandler(serviceToUse);
+                return lintCommandHandler.processLintCommand(message);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    cb.onWorkerSuccess(get());
+                } catch (InterruptedException | ExecutionException e) {
+                    cb.onWorkerError("Error processing lint command", e,
+                            "Sorry, I encountered an error while processing your lint command. Please try again.");
+                }
+            }
+        }.execute();
+    }
+
+    private void handleWrapCommand() {
+        log.info("Processing @wrap command");
+        cb.setLastCommandType("WRAP");
+        cb.setInputEnabled(false);
+
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                return new WrapCommandHandler().processWrapCommand();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    cb.onWorkerSuccess(get());
+                } catch (InterruptedException | ExecutionException e) {
+                    cb.onWorkerError("Error processing @wrap command", e,
+                            "Sorry, I encountered an error while processing the @wrap command. Please try again.");
+                }
+            }
+        }.execute();
+    }
+
+    private void handleUsageCommand() {
+        log.info("Processing @usage command");
+        cb.setInputEnabled(false);
+
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                String selectedModel = cb.getSelectedModel();
+                AiService serviceToUse = selectedModel != null ? cb.resolveAiService(selectedModel) : null;
+                return new UsageCommandHandler().processUsageCommand(serviceToUse);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    cb.onWorkerSuccess(get());
+                } catch (InterruptedException | ExecutionException e) {
+                    cb.onWorkerError("Error processing usage command", e,
+                            "Sorry, I encountered an error while processing the usage command. Please try again.");
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * True when the selected model routes to a provider the agent can drive: the
+     * tool-calling adapters (Anthropic Claude, OpenAI, Google Gemini, DeepSeek,
+     * Grok, Meta Muse) plus the
+     * subscription CLIs (Codex, Claude Code), which get their tools through the
+     * prompt-level protocol. Every other provider falls back to plain chat.
+     */
+    static boolean isAgentCapableModel(String selectedModel) {
+        return isClaudeModel(selectedModel)
+                || (selectedModel != null && selectedModel.startsWith("openai:"))
+                || (selectedModel != null && selectedModel.startsWith("google:"))
+                || (selectedModel != null && selectedModel.startsWith("deepseek:"))
+                || (selectedModel != null && selectedModel.startsWith("grok:"))
+                || (selectedModel != null && selectedModel.startsWith("meta:"))
+                || (selectedModel != null && selectedModel.startsWith("codex:"))
+                || (selectedModel != null && selectedModel.startsWith("claude-code:"));
+    }
+
+    static boolean shouldUseAgent(boolean featureEnabled, boolean agentSelected, String selectedModel) {
+        return featureEnabled && agentSelected && isAgentCapableModel(selectedModel);
+    }
+
+    /** True when the selected model routes to Claude (non-prefixed model ids). */
+    static boolean isClaudeModel(String selectedModel) {
+        if (selectedModel == null || selectedModel.isEmpty()) {
+            return true;
+        }
+        return !selectedModel.startsWith("openai:")
+                && !selectedModel.startsWith("ollama:")
+                && !selectedModel.startsWith("deepseek:")
+                && !selectedModel.startsWith("google:")
+                && !selectedModel.startsWith("grok:")
+                && !selectedModel.startsWith("meta:")
+                && !selectedModel.startsWith("bedrock:")
+                && !selectedModel.startsWith("codex:")
+                && !selectedModel.startsWith("claude-code:");
+    }
+
+    /**
+     * Extracts the leading @command token from a message.
+     *
+     * @param message the raw input message
+     * @return the @command token, or "" if none
+     */
+    static String getCommand(String message) {
+        String trimmed = message.trim();
+        if (!trimmed.startsWith("@")) {
+            return "";
+        }
+        int spaceIndex = trimmed.indexOf(' ');
+        return spaceIndex == -1 ? trimmed : trimmed.substring(0, spaceIndex);
+    }
+}

@@ -1,0 +1,118 @@
+package com.jmeterastra.gui;
+
+import com.jmeterastra.agent.AgentRequestRouter;
+import com.jmeterastra.agent.TriageNotice;
+import com.jmeterastra.service.AiService;
+
+import java.util.List;
+
+/**
+ * Callback interface implemented by AiChatPanel so that CommandDispatcher can
+ * trigger UI updates and access shared state without holding a direct reference
+ * to the panel itself.
+ */
+public interface CommandCallback {
+
+    // --- UI state ---
+
+    void setInputEnabled(boolean enabled);
+
+    void clearMessageField();
+
+    void appendUserMessage(String message);
+
+    void appendLoadingIndicator();
+
+    void removeLoadingIndicator();
+
+    void processAiResponse(String response);
+
+    void appendRedMessage(String message);
+
+    // --- Streaming UI control ---
+
+    void showStopButton();
+
+    void hideStopButton();
+
+    void appendStreamToken(String token);
+
+    void onStreamComplete(String fullResponse);
+
+    void onStreamError(String logMessage, Exception e, String userMessage);
+
+    Runnable getAiStreamResponse(String message, java.util.function.Consumer<String> tokenConsumer, Runnable onComplete, java.util.function.Consumer<Exception> onError);
+
+    /**
+     * Appends a streamed reasoning (thinking) token to the transcript's
+     * thinking card. Default ignores reasoning; the chat panel routes it into
+     * the collapsible thoughts card (plain chat streaming and agent mode).
+     */
+    default void appendReasoningToken(String token) {
+        // no reasoning display by default
+    }
+
+    /**
+     * Resolves {@code [file:<id>]} attachment markers in conversation turns to
+     * their prepared content (used when seeding the agent with prior turns).
+     * Default returns the turns unchanged.
+     */
+    default List<String> resolveAttachmentMarkers(List<String> turns) {
+        return turns;
+    }
+
+    // --- Shared data ---
+
+    String getSelectedModel();
+
+    default boolean isAgentModeSelected() {
+        return false;
+    }
+
+    List<String> getConversationHistory();
+
+    void addToConversationHistory(String entry);
+
+    // --- Service resolution ---
+
+    String getAiResponse(String message);
+
+    AiService resolveAiService(String selectedModel);
+
+    String getCurrentElementInfo();
+
+    // --- Command-type tracking ---
+
+    void setLastCommandType(String type);
+
+    // --- Chat display ---
+
+    void appendMessageToChat(String message);
+
+    /**
+     * Appends an agent tool-activity status line (tool call start/finish).
+     * Default renders it as a plain chat message; implementations may style
+     * it as de-emphasized background activity instead.
+     */
+    default void appendToolActivity(String message) {
+        appendMessageToChat(message);
+    }
+
+    default void appendJevRoute(AgentRequestRouter.Notice notice, String modelId) {
+    }
+
+    /**
+     * Appends a Jev failure-triage card after {@code get_test_results} reported
+     * failures. Default no-op for implementations without a styled transcript.
+     */
+    default void appendJevTriage(TriageNotice notice, String modelId) {
+    }
+
+    void appendErrorMessageToChat(String context, Exception e);
+
+    // --- Worker callbacks ---
+
+    void onWorkerSuccess(String response);
+
+    void onWorkerError(String logMessage, Exception e, String userMessage);
+}

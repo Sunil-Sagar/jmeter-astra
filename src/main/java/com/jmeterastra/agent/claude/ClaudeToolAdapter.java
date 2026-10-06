@@ -1,0 +1,85 @@
+package com.jmeterastra.agent.claude;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.jmeterastra.agent.loop.AssistantTurn;
+import com.jmeterastra.agent.loop.ToolOutcome;
+import com.jmeterastra.agent.tool.JsonSchemaMapper;
+import com.jmeterastra.agent.tool.ToolSpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.anthropic.core.JsonValue;
+import com.anthropic.models.messages.ContentBlock;
+import com.anthropic.models.messages.Tool;
+import com.anthropic.models.messages.ToolResultBlockParam;
+import com.anthropic.models.messages.ToolUseBlock;
+
+/**
+ * Translates between our provider-neutral tool model and the Anthropic
+ * (anthropic-java) message API: {@link ToolSpec} &rarr; {@link Tool} with a JSON
+ * input schema, an assistant response's content blocks &rarr; {@link AssistantTurn},
+ * and a {@link ToolOutcome} &rarr; {@link ToolResultBlockParam}.
+ */
+public final class ClaudeToolAdapter {
+
+    private static final Logger log = LoggerFactory.getLogger(ClaudeToolAdapter.class);
+
+    /** Converts a provider-neutral spec into an Anthropic tool definition. */
+    public Tool toAnthropicTool(ToolSpec spec) {
+        Tool.InputSchema.Properties.Builder properties = Tool.InputSchema.Properties.builder();
+        for (Map.Entry<String, Object> property : JsonSchemaMapper.properties(spec).entrySet()) {
+            properties.putAdditionalProperty(property.getKey(), JsonValue.from(property.getValue()));
+        }
+
+        Tool.InputSchema schema = Tool.InputSchema.builder()
+                .properties(properties.build())
+                .required(JsonSchemaMapper.required(spec))
+                .build();
+
+        return Tool.builder()
+                .name(spec.getName())
+                .description(spec.getDescription())
+                .inputSchema(schema)
+                .build();
+    }
+
+    /** Flattens an assistant response's content blocks into a neutral turn. */
+    public AssistantTurn toAssistantTurn(List<ContentBlock> blocks) {
+        StringBuilder text = new StringBuilder();
+        List<AssistantTurn.ToolCall> calls = new ArrayList<>();
+
+        for (ContentBlock block : blocks) {
+            if (block.text().isPresent()) {
+                text.append(block.text().get().text());
+            } else if (block.toolUse().isPresent()) {
+                ToolUseBlock tu = block.toolUse().get();
+                calls.add(new AssistantTurn.ToolCall(tu.id(), tu.name(), toArguments(tu._input())));
+            }
+        }
+        return new AssistantTurn(text.toString(), calls);
+    }
+
+    /** Builds a tool_result block to send the outcome of a tool call back to the model. */
+    public ToolResultBlockParam toResultBlock(ToolOutcome outcome) {
+        return ToolResultBlockParam.builder()
+                .toolUseId(outcome.getToolCallId())
+                .content(outcome.getContent())
+                .isError(outcome.isError())
+                .build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> toArguments(JsonValue input) {
+        try {
+            Map<String, Object> args = input.convert(Map.class);
+            return args == null ? new LinkedHashMap<>() : args;
+        } catch (RuntimeException e) {
+            log.warn("Could not parse tool_use input as a map: {}", input, e);
+            return new LinkedHashMap<>();
+        }
+    }
+}

@@ -1,0 +1,43 @@
+package com.jmeterastra.agent.loop;
+
+import java.util.List;
+
+import com.jmeterastra.agent.tool.ToolSpec;
+
+/**
+ * Provider-neutral, stateful conversation seam used by {@link AgentLoop}.
+ * <p>
+ * Implementations own the underlying message history and tool/system wiring for
+ * a single agent run: {@link #start(String)} begins the conversation with the
+ * user's request, and {@link #next(List)} feeds the results of the previous
+ * turn's tool calls back to the model. Both return the model's next
+ * {@link AssistantTurn}. A fresh instance is expected per run.
+ */
+public interface ChatModel {
+
+    /** Sends the initial user message and returns the model's first turn. */
+    AssistantTurn start(String userMessage);
+
+    /** Sends the outcomes of the previous turn's tool calls and returns the next turn. */
+    AssistantTurn next(List<ToolOutcome> toolOutcomes);
+
+    /**
+     * Returns and clears the reasoning text captured from the most recent turn's
+     * response (e.g. a Claude thinking block), or null when there was none. The
+     * {@link AgentLoop} drains this after every turn and forwards it to the run's
+     * reasoning consumer, so extended thinking renders in the UI instead of being
+     * silently dropped by the tool adapters. Default: no reasoning.
+     */
+    default String consumeLastReasoning() {
+        return null;
+    }
+
+    /**
+     * Replaces the tool specs advertised to the provider on subsequent turns.
+     * Used by mid-run tool-set expansion ({@code expand_tools}); implementations
+     * must apply the new list to the next request they build. Default no-op for
+     * models whose tool set is fixed for the run.
+     */
+    default void updateToolSpecs(List<ToolSpec> specs) {
+    }
+}

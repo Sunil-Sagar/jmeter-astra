@@ -1,0 +1,418 @@
+package com.jmeterastra.service;
+
+import io.github.ollama4j.Ollama;
+import io.github.ollama4j.models.chat.OllamaChatMessageRole;
+import io.github.ollama4j.models.chat.OllamaChatRequest;
+import io.github.ollama4j.models.chat.OllamaChatResult;
+import io.github.ollama4j.models.chat.OllamaChatStreamObserver;
+import io.github.ollama4j.models.request.ThinkMode;
+import io.github.ollama4j.models.response.Model;
+import io.github.ollama4j.models.response.ModelDetail;
+import io.github.ollama4j.utils.OptionsBuilder;
+import com.jmeterastra.service.reasoning.ReasoningSettings;
+import com.jmeterastra.utils.AiConfig;
+import com.jmeterastra.utils.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+// Ollama Help https://ollama4j.github.io/ollama4j/intro
+public class OllamaAiService implements AiService {
+
+    private static final Logger logger = LoggerFactory.getLogger(OllamaAiService.class);
+    private final Ollama ollamaClient;
+    private String model;
+    private final String host;
+    private float temperature;
+    private final int maxHistorySize;
+    private final boolean isThinkingModeEnabled;
+    private final ThinkMode thinkingMode;
+    private final long requestTimeoutSeconds;
+    private final String systemPrompt;
+    private ReasoningSettings reasoningSettings;
+    private String lastReasoning;
+    private com.jmeterastra.service.usage.UsageStats usageStats;
+    /** Live capability probe results per model name (Ollama /api/show). */
+    private final java.util.concurrent.ConcurrentHashMap<String, Boolean> thinkingCapabilityCache =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+
+    public OllamaAiService() {
+        this.host = buildHost(
+                AiConfig.getProperty("ollama.host", "http://localhost"),
+                AiConfig.getProperty("ollama.port", "11434"));
+
+        this.model = AiConfig.getProperty("ollama.default.model", "deepseek-r1:1.5b");
+        this.temperature = parseTemperature(AiConfig.getProperty("ollama.temperature", "0.5"));
+        this.maxHistorySize = Integer.parseInt(AiConfig.getProperty("ollama.max.history.size", "10"));
+        this.isThinkingModeEnabled = AiConfig.getProperty("ollama.thinking.mode", "DISABLED").equalsIgnoreCase("enabled");
+        this.thinkingMode = parseThinkingMode(AiConfig.getProperty("ollama.thinking.level", "MEDIUM"));
+        this.requestTimeoutSeconds = parseTimeout(AiConfig.getProperty("ollama.request.timeout.seconds", "120"));
+        this.ollamaClient = new Ollama(this.host);
+        this.ollamaClient.setRequestTimeoutSeconds(this.requestTimeoutSeconds);
+        String configuredPrompt = AiConfig.getProperty("ollama.system.prompt", "");
+        this.systemPrompt = (configuredPrompt != null && !configuredPrompt.isEmpty())
+                ? configuredPrompt : Constants.DEFAULT_JMETER_SYSTEM_PROMPT;
+
+        logger.info("Initialized Ollama service with host: {}, model: {}, thinking mode: {}, timeout: {}s",
+                this.host, this.model, this.isThinkingModeEnabled ? this.thinkingMode : "DISABLED", this.requestTimeoutSeconds);
+    }
+
+    private static String buildHost(String hostValue, String portValue) {
+        if (hostValue == null || hostValue.isEmpty()) {
+            return "http://localhost:11434";
+        }
+        if (!portValue.isEmpty() && !hostValue.matches(".*:\\d+/?$")) {
+            hostValue = hostValue.endsWith("/") ? hostValue.substring(0, hostValue.length() - 1) : hostValue;
+            return hostValue + ":" + portValue;
+        }
+        return hostValue;
+    }
+
+    private static float parseTemperature(String value) {
+        try {
+            float temp = Float.parseFloat(value);
+            if (temp < 0 || temp >= 1) {
+                logger.warn("Temperature must be between 0 and 1. Provided value: {}. Setting to default 0.5", temp);
+                return 0.5f;
+            }
+            return temp;
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid temperature value: '{}'. Setting to default 0.5", value);
+            return 0.5f;
+        }
+    }
+
+    private static ThinkMode parseThinkingMode(String value) {
+        try {
+            return ThinkMode.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid thinking level: '{}'. Setting to default MEDIUM", value);
+            return ThinkMode.MEDIUM;
+        }
+    }
+
+    private static long parseTimeout(String value) {
+        try {
+            long timeout = Long.parseLong(value);
+            if (timeout <= 0) {
+                logger.warn("Request timeout must be positive. Provided value: {}. Setting to default 120s", timeout);
+                return 120L;
+            }
+            return timeout;
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid request timeout value: '{}'. Setting to default 120s", value);
+            return 120L;
+        }
+    }
+
+    public boolean isReachable() {
+        try {
+            return this.ollamaClient.ping();
+        } catch (Exception e) {
+            logger.error("Ollama is not reachable at {}", this.host);
+            return false;
+        }
+    }
+
+    public boolean isValidModel(String configuredModel) {
+        if (configuredModel == null || configuredModel.isEmpty()) {
+            return false;
+        }
+        try {
+            List<Model> models = this.ollamaClient.listModels();
+            for (Model m : models) {
+                if (m.getName().equals(configuredModel)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            logger.error("Model is not valid", e);
+            return false;
+        }
+    }
+
+    public List<Model> listModels() {
+        try {
+            return this.ollamaClient.listModels();
+        } catch (Exception e) {
+            logger.warn("Ollama is not available ({}). Skipping Ollama model discovery.", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public String getName() {
+        return "Ollama";
+    }
+
+    @Override
+    public String generateResponse(List<String> messages) {
+        return generateResponse(messages, this.systemPrompt);
+    }
+
+    public void setModel(String modelId) {
+        this.model = modelId;
+        logger.info("Ollama Model set to: {}", modelId);
+    }
+
+
+    public boolean isThinkingModeValid() {
+        return this.thinkingMode == ThinkMode.LOW || this.thinkingMode == ThinkMode.MEDIUM || this.thinkingMode == ThinkMode.HIGH;
+    }
+
+    @Override
+    public void setReasoningSettings(ReasoningSettings settings) {
+        this.reasoningSettings = settings;
+    }
+
+    /** Receives the session usage accumulator (context-stats label). */
+    @Override
+    public void setUsageStats(com.jmeterastra.service.usage.UsageStats stats) {
+        this.usageStats = stats;
+    }
+
+    @Override
+    public String consumeLastReasoning() {
+        String reasoning = lastReasoning;
+        lastReasoning = null;
+        return reasoning;
+    }
+
+    /**
+     * The probed thinking capability of an Ollama model, or empty when not yet
+     * resolved. Ollama reports real capabilities per installed model via
+     * {@code /api/show} (e.g. "completion", "tools", "thinking", "vision").
+     */
+    public java.util.Optional<Boolean> probeThinkingCapability(String model) {
+        if (model == null) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.ofNullable(thinkingCapabilityCache.get(model));
+    }
+
+    /**
+     * Resolves a model's thinking capability in the background (never blocks the
+     * caller), caches the result, and runs {@code onResolved} on the EDT. Safe to
+     * call repeatedly - a cached or in-flight resolution wins.
+     */
+    public void resolveThinkingCapability(String model, Runnable onResolved) {
+        if (model == null || thinkingCapabilityCache.containsKey(model)) {
+            if (onResolved != null) {
+                javax.swing.SwingUtilities.invokeLater(onResolved);
+            }
+            return;
+        }
+        Thread probe = new Thread(() -> {
+            boolean supportsThinking = false;
+            try {
+                String[] capabilities = fetchCapabilities(model);
+                if (capabilities != null) {
+                    for (String capability : capabilities) {
+                        if ("thinking".equalsIgnoreCase(capability)) {
+                            supportsThinking = true;
+                            break;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.debug("Capability probe failed for Ollama model {}: {}", model, e.getMessage());
+            }
+            thinkingCapabilityCache.put(model, supportsThinking);
+            logger.info("Ollama model {} thinking capability: {}", model, supportsThinking);
+            if (onResolved != null) {
+                javax.swing.SwingUtilities.invokeLater(onResolved);
+            }
+        });
+        probe.setDaemon(true);
+        probe.start();
+    }
+
+    /** Seam over the Ollama {@code /api/show} call for tests. */
+    String[] fetchCapabilities(String model) throws Exception {
+        ModelDetail detail = ollamaClient.getModelDetails(model);
+        return detail != null ? detail.getCapabilities() : null;
+    }
+
+    /**
+     * True when thinking should be requested. The UI toggle wins once the user
+     * has flipped it; before that the {@code ollama.thinking.mode} property is
+     * the default (legacy behavior preserved).
+     */
+    boolean isThinkingEnabled() {
+        if (reasoningSettings != null && reasoningSettings.isThinkingToggled()) {
+            return reasoningSettings.isThinkingEnabled();
+        }
+        return isThinkingModeEnabled;
+    }
+
+    /**
+     * The thinking level to request. The UI effort wins once the user has
+     * picked one; before that the {@code ollama.thinking.level} property is
+     * the default.
+     */
+    ThinkMode effectiveThinkingMode() {
+        if (reasoningSettings != null && reasoningSettings.isEffortTouched()) {
+            return parseThinkingMode(reasoningSettings.getEffort());
+        }
+        return thinkingMode;
+    }
+
+    @Override
+    public String generateResponse(List<String> messages, String systemPrompt) {
+
+        OllamaChatRequest request = OllamaChatRequest.builder();
+        OllamaChatResult result = null;
+
+        if (!isValidModel(this.model)) {
+            logger.warn("Configured model '{}' is not available. Using default or failing.", this.model);
+        }
+
+        if (isThinkingModeEnabled && !isThinkingModeValid()) {
+            logger.warn("Thinking mode is enabled but thinking level '{}' is not valid. Disabling thinking mode.", this.thinkingMode);
+        }
+
+        try {
+            request = buildOllamaChatRequest(request);
+
+            if (systemPrompt != null && !systemPrompt.isEmpty()) {
+                request.withMessage(OllamaChatMessageRole.SYSTEM, systemPrompt);
+            } else {
+                request.withMessage(OllamaChatMessageRole.SYSTEM, Constants.DEFAULT_JMETER_SYSTEM_PROMPT);
+            }
+
+            List<String> limitedHistory;
+            if (messages.size() > maxHistorySize) {
+                limitedHistory = messages.subList(messages.size() - maxHistorySize, messages.size());
+            } else {
+                limitedHistory = new ArrayList<>(messages);
+            }
+
+            for (int i = 0; i < limitedHistory.size(); i++) {
+                String msg = limitedHistory.get(i);
+                if (msg == null || msg.isEmpty()) continue;
+                if (i % 2 == 0) {
+                    request.withMessage(OllamaChatMessageRole.USER, msg);
+                } else {
+                    request.withMessage(OllamaChatMessageRole.ASSISTANT, msg);
+                }
+            }
+
+            result = ollamaClient.chat(request, null);
+            if (usageStats != null) {
+                Integer promptTokens = result.getResponseModel().getPromptEvalCount();
+                Integer outputTokens = result.getResponseModel().getEvalCount();
+                if (promptTokens != null && outputTokens != null) {
+                    usageStats.record("ollama:" + this.model, promptTokens, outputTokens);
+                }
+            }
+            String thinking = result.getResponseModel().getMessage().getThinking();
+            lastReasoning = (thinking != null && !thinking.isBlank()) ? thinking : null;
+            return result.getResponseModel().getMessage().getResponse();
+
+        } catch (Exception e) {
+            logger.error("Error generating response from Ollama", e);
+            return "Error generating response: " + e.getMessage();
+        }
+    }
+
+    @Override
+    public Runnable generateStreamResponse(List<String> conversation, String model, Consumer<String> tokenConsumer, Runnable onComplete, Consumer<Exception> onError) {
+        return generateStreamResponse(conversation, model, tokenConsumer, reasoning -> {}, onComplete, onError);
+    }
+
+    @Override
+    public Runnable generateStreamResponse(List<String> conversation, String model, Consumer<String> tokenConsumer, Consumer<String> reasoningConsumer, Runnable onComplete, Consumer<Exception> onError) {
+        if (model != null && !model.isEmpty()) {
+            this.model = model;
+        }
+
+        Thread streamThread = new Thread(() -> {
+            try {
+                OllamaChatRequest request = OllamaChatRequest.builder();
+                request = buildOllamaChatRequest(request);
+
+                if (systemPrompt != null && !systemPrompt.isEmpty()) {
+                    request.withMessage(OllamaChatMessageRole.SYSTEM, systemPrompt);
+                } else {
+                    request.withMessage(OllamaChatMessageRole.SYSTEM, Constants.DEFAULT_JMETER_SYSTEM_PROMPT);
+                }
+
+                List<String> limitedHistory = conversation.size() > maxHistorySize
+                        ? conversation.subList(conversation.size() - maxHistorySize, conversation.size())
+                        : new ArrayList<>(conversation);
+
+                for (int i = 0; i < limitedHistory.size(); i++) {
+                    String msg = limitedHistory.get(i);
+                    if (msg == null || msg.isEmpty()) continue;
+                    if (i % 2 == 0) {
+                        request.withMessage(OllamaChatMessageRole.USER, msg);
+                    } else {
+                        request.withMessage(OllamaChatMessageRole.ASSISTANT, msg);
+                    }
+                }
+
+                OllamaChatStreamObserver observer = new OllamaChatStreamObserver();
+                observer.setResponseStreamHandler(token -> {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        tokenConsumer.accept(token);
+                    }
+                });
+                observer.setThinkingStreamHandler(token -> {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        reasoningConsumer.accept(token);
+                    }
+                });
+
+                // chat() blocks until the stream finishes; the returned result's
+                // final (done=true) response model carries the eval counts.
+                OllamaChatResult streamResult = ollamaClient.chat(request, observer);
+
+                if (!Thread.currentThread().isInterrupted()) {
+                    if (usageStats != null && streamResult != null
+                            && streamResult.getResponseModel() != null) {
+                        Integer promptTokens = streamResult.getResponseModel().getPromptEvalCount();
+                        Integer outputTokens = streamResult.getResponseModel().getEvalCount();
+                        if (promptTokens != null && outputTokens != null) {
+                            usageStats.record("ollama:" + this.model, promptTokens, outputTokens);
+                        }
+                    }
+                    onComplete.run();
+                }
+            } catch (Exception e) {
+                if (Thread.currentThread().isInterrupted()) {
+                    logger.info("Ollama streaming cancelled");
+                } else {
+                    logger.error("Error generating streaming response from Ollama", e);
+                    onError.accept(e);
+                }
+            }
+        });
+
+        streamThread.setDaemon(true);
+        streamThread.start();
+        return streamThread::interrupt;
+    }
+
+    private OllamaChatRequest buildOllamaChatRequest(OllamaChatRequest request) {
+
+        if (isThinkingEnabled() && isThinkingModeValid()) {
+            ThinkMode mode = effectiveThinkingMode();
+            logger.info("Thinking ENABLED for Ollama model {} with level {} (source: {})",
+                    this.model, mode,
+                    reasoningSettings != null && reasoningSettings.isThinkingToggled()
+                            ? "UI toolbar" : "ollama.thinking.* properties");
+            return request.withThinking(mode)
+                    .withOptions(new OptionsBuilder().setTemperature(this.temperature).build())
+                    .withModel(this.model).build();
+        } else {
+            return request.withThinking(ThinkMode.DISABLED)
+                    .withOptions(new OptionsBuilder().setTemperature(this.temperature).build())
+                    .withModel(this.model).build();
+        }
+    }
+}
