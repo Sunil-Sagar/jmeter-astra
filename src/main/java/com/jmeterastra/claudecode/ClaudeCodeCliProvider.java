@@ -38,6 +38,8 @@ public final class ClaudeCodeCliProvider implements SubscriptionCliProvider {
     public static final String TIMEOUT_KEY = "jmeter.ai.claudecode.timeout.seconds";
     public static final String LOGIN_TIMEOUT_KEY = "jmeter.ai.claudecode.login.timeout.seconds";
     public static final String MODELS_KEY = "jmeter.ai.claudecode.models";
+    /** Overrides which model the picker pre-selects in place of {@link #DEFAULT_MODEL}. */
+    public static final String PREFERRED_MODEL_KEY = "jmeter.ai.claudecode.default.model";
 
     private static final Duration STATUS_TIMEOUT = Duration.ofSeconds(30);
 
@@ -63,7 +65,9 @@ public final class ClaudeCodeCliProvider implements SubscriptionCliProvider {
 
     @Override
     public boolean isEnabled() {
-        return Boolean.parseBoolean(AiConfig.getProperty(ENABLED_KEY, "false"));
+        // Defaults to true: prefer the CLI subscription session over per-request
+        // Anthropic API billing when the user hasn't set this property explicitly.
+        return Boolean.parseBoolean(AiConfig.getProperty(ENABLED_KEY, "true"));
     }
 
     @Override
@@ -90,6 +94,16 @@ public final class ClaudeCodeCliProvider implements SubscriptionCliProvider {
     @Override
     public void setModel(String model) {
         this.model = normalizeModel(model);
+    }
+
+    /**
+     * The model id the picker should pre-select for this provider:
+     * {@link #PREFERRED_MODEL_KEY} when configured, otherwise {@link #DEFAULT_MODEL}
+     * ("whatever model the Claude Code CLI itself is configured to use").
+     */
+    public String defaultModelOrFallback() {
+        String preferred = AiConfig.getProperty(PREFERRED_MODEL_KEY, "").trim();
+        return preferred.isEmpty() ? DEFAULT_MODEL : preferred;
     }
 
     private static String normalizeModel(String model) {
@@ -287,6 +301,10 @@ public final class ClaudeCodeCliProvider implements SubscriptionCliProvider {
     public List<String> listModels() {
         List<String> models = new ArrayList<>();
         models.add(DEFAULT_MODEL);
+        String preferred = AiConfig.getProperty(PREFERRED_MODEL_KEY, "").trim();
+        if (!preferred.isEmpty() && !models.contains(preferred)) {
+            models.add(preferred);
+        }
         for (String id : AiConfig.getProperty(MODELS_KEY, "").split(",")) {
             String trimmed = id.trim();
             if (!trimmed.isEmpty() && !models.contains(trimmed)) {

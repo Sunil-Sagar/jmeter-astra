@@ -35,6 +35,14 @@ class WelcomeMessagesTest {
 
     @Test
     void forStatus_nullOrNotReady_returnsSetupCta() {
+        aiConfig.when(() -> AiConfig.getProperty(anyString(), anyString())).thenAnswer(inv -> {
+            String key = inv.getArgument(0);
+            String def = inv.getArgument(1);
+            if ("jmeter.ai.claudecode.provider.enabled".equals(key)) {
+                return "false";
+            }
+            return def;
+        });
         String msg = WelcomeMessages.forStatus(ProviderStatus.fromConfig());
         assertTrue(msg.contains("no API key is configured"));
         assertTrue(msg.contains("user.properties"));

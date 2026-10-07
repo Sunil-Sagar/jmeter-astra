@@ -239,6 +239,51 @@ class ClaudeCodeCliProviderTest {
         assertTrue(runner.commands.isEmpty());
     }
 
+    @Test
+    void listModelsIsJustTheDefaultWhenNothingIsConfigured() {
+        assertEquals(List.of("default"), provider("claude").listModels());
+    }
+
+    @Test
+    void listModelsIncludesThePreferredModelBesideTheDefault() {
+        config.when(() -> AiConfig.getProperty(anyString(), anyString())).thenAnswer(invocation -> {
+            String key = invocation.getArgument(0);
+            return ClaudeCodeCliProvider.PREFERRED_MODEL_KEY.equals(key)
+                    ? "claude-sonnet-5" : invocation.getArgument(1);
+        });
+        assertEquals(List.of("default", "claude-sonnet-5"), provider("claude").listModels());
+    }
+
+    @Test
+    void listModelsDoesNotDuplicateThePreferredModelAlreadyInTheExtraList() {
+        config.when(() -> AiConfig.getProperty(anyString(), anyString())).thenAnswer(invocation -> {
+            String key = invocation.getArgument(0);
+            if (ClaudeCodeCliProvider.PREFERRED_MODEL_KEY.equals(key)) {
+                return "claude-sonnet-5";
+            }
+            if (ClaudeCodeCliProvider.MODELS_KEY.equals(key)) {
+                return "claude-sonnet-5,claude-opus-4-8";
+            }
+            return invocation.getArgument(1);
+        });
+        assertEquals(List.of("default", "claude-sonnet-5", "claude-opus-4-8"), provider("claude").listModels());
+    }
+
+    @Test
+    void defaultModelOrFallbackIsTheDefaultEntryWhenUnconfigured() {
+        assertEquals("default", provider("claude").defaultModelOrFallback());
+    }
+
+    @Test
+    void defaultModelOrFallbackIsThePreferredModelWhenConfigured() {
+        config.when(() -> AiConfig.getProperty(anyString(), anyString())).thenAnswer(invocation -> {
+            String key = invocation.getArgument(0);
+            return ClaudeCodeCliProvider.PREFERRED_MODEL_KEY.equals(key)
+                    ? "claude-sonnet-5" : invocation.getArgument(1);
+        });
+        assertEquals("claude-sonnet-5", provider("claude").defaultModelOrFallback());
+    }
+
     private ClaudeCodeCliProvider provider(String binary) {
         return new ClaudeCodeCliProvider(new FakeAdapter(binary), runner);
     }

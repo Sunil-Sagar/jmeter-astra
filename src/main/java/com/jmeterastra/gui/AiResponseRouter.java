@@ -77,6 +77,11 @@ public class AiResponseRouter {
     public String getAiResponse(String selectedModel, List<String> conversationHistory) {
         conversationHistory = resolveAttachments(conversationHistory);
         if (selectedModel == null) {
+            if (claudeCodeReady()) {
+                log.info("No model selected, using default Claude Code CLI subscription session");
+                return generateWithCli(claudeCodeService, ClaudeCodeCliProvider.DEFAULT_MODEL,
+                        conversationHistory, "Claude Code");
+            }
             log.warn("No model selected, using default Anthropic model: {}", claudeService.getCurrentModel());
             return claudeService.generateResponse(conversationHistory);
         }
@@ -171,6 +176,11 @@ public class AiResponseRouter {
     public Runnable generateStreamResponse(String selectedModel, List<String> conversationHistory, Consumer<String> tokenConsumer, Consumer<String> reasoningConsumer, Runnable onComplete, Consumer<Exception> onError) {
         conversationHistory = resolveAttachments(conversationHistory);
         if (selectedModel == null) {
+            if (claudeCodeReady()) {
+                log.info("No model selected, using default Claude Code CLI subscription session");
+                return claudeCodeService.generateStreamResponse(conversationHistory, ClaudeCodeCliProvider.DEFAULT_MODEL,
+                        tokenConsumer, reasoningConsumer, onComplete, onError);
+            }
             log.warn("No model selected, using default Anthropic model: {}", claudeService.getCurrentModel());
             return claudeService.generateStreamResponse(conversationHistory, claudeService.getCurrentModel(), tokenConsumer, reasoningConsumer, onComplete, onError);
         }
@@ -252,6 +262,18 @@ public class AiResponseRouter {
     }
 
     /**
+     * Whether the Claude Code CLI subscription session should be preferred over
+     * the Anthropic API key when no model is explicitly selected. Only checks
+     * the enabled property and cached PATH detection - never shells out here,
+     * so the default (no-selection) path stays as fast as before.
+     */
+    private boolean claudeCodeReady() {
+        return claudeCodeService != null
+                && claudeCodeService.getClaudeCodeProvider().isEnabled()
+                && claudeCodeService.getClaudeCodeProvider().isInstalled();
+    }
+
+    /**
      * Resolves the appropriate {@link AiService} based on the selected model ID prefix.
      *
      * @param selectedModel the model ID string from the model selector
@@ -259,6 +281,10 @@ public class AiResponseRouter {
      */
     public AiService resolveAiService(String selectedModel) {
         if (selectedModel == null || selectedModel.isEmpty()) {
+            if (claudeCodeReady()) {
+                claudeCodeService.setModel(ClaudeCodeCliProvider.DEFAULT_MODEL);
+                return claudeCodeService;
+            }
             return claudeService;
         }
         if (selectedModel.startsWith("openai:")) {

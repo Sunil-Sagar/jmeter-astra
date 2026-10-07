@@ -1,5 +1,6 @@
 package com.jmeterastra.service;
 
+import com.jmeterastra.claudecode.ClaudeCodeCliProvider;
 import com.jmeterastra.utils.AiConfig;
 import com.jmeterastra.utils.GatewayConfig;
 
@@ -13,10 +14,12 @@ public final class ProviderStatus {
 
     private final boolean anyCloudReady;
     private final boolean ollamaPreferred;
+    private final boolean claudeCodeCliPreferred;
 
-    private ProviderStatus(boolean anyCloudReady, boolean ollamaPreferred) {
+    private ProviderStatus(boolean anyCloudReady, boolean ollamaPreferred, boolean claudeCodeCliPreferred) {
         this.anyCloudReady = anyCloudReady;
         this.ollamaPreferred = ollamaPreferred;
+        this.claudeCodeCliPreferred = claudeCodeCliPreferred;
     }
 
     /** Loads status from the current {@link AiConfig} / JMeter properties. */
@@ -31,15 +34,28 @@ public final class ProviderStatus {
                 || GatewayConfig.hasAnthropicGatewayCredentials();
         String serviceType = AiConfig.getProperty("jmeter.ai.service.type", "");
         boolean ollamaPreferred = "ollama".equalsIgnoreCase(serviceType == null ? "" : serviceType.trim());
-        return new ProviderStatus(cloud, ollamaPreferred);
+        boolean claudeCodeCliPreferred = isClaudeCodeCliPreferred();
+        return new ProviderStatus(cloud, ollamaPreferred, claudeCodeCliPreferred);
+    }
+
+    /**
+     * Declarative only, like {@link #isOllamaPreferred()} - no PATH/filesystem
+     * probing here, so this stays fast and deterministic in tests. Reads the
+     * same property {@link ClaudeCodeCliProvider#isEnabled()} does, which now
+     * defaults to {@code true}: an authenticated Claude Code subscription
+     * session is a usable fallback even with zero cloud API keys configured.
+     */
+    private static boolean isClaudeCodeCliPreferred() {
+        return Boolean.parseBoolean(AiConfig.getProperty(ClaudeCodeCliProvider.ENABLED_KEY, "true"));
     }
 
     /**
      * True when the user has at least one cloud/API key (or Bedrock creds),
-     * or has explicitly chosen Ollama as the default service type.
+     * has explicitly chosen Ollama as the default service type, or has an
+     * enabled (by default) Claude Code CLI subscription path available.
      */
     public boolean isReady() {
-        return anyCloudReady || ollamaPreferred;
+        return anyCloudReady || ollamaPreferred || claudeCodeCliPreferred;
     }
 
     /** True when at least one non-placeholder cloud/API key is set. */

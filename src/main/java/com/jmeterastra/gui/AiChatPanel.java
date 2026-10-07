@@ -21,6 +21,7 @@ import org.apache.jorphan.gui.JMeterUIDefaults;
 import com.jmeterastra.agent.AgentRequestRouter;
 import com.jmeterastra.agent.JMeterAgent;
 import com.jmeterastra.agent.TriageNotice;
+import com.jmeterastra.claudecode.ClaudeCodeCliProvider;
 import com.jmeterastra.gui.theme.ThemeColors;
 import com.jmeterastra.gui.theme.UiTokens;
 import com.jmeterastra.utils.AiConfig;
@@ -785,8 +786,16 @@ public class AiChatPanel
             protected void done() {
                 try {
                     List<String> models = get();
-                    // Get the default model ID
+                    // Prefer the Claude Code CLI subscription session as the picker's
+                    // default when it's enabled and installed; otherwise fall back to
+                    // the Anthropic API-key model, matching AiResponseRouter's routing.
                     String defaultModelId = claudeService.getCurrentModel();
+                    if (claudeCodeService != null
+                            && claudeCodeService.getClaudeCodeProvider().isEnabled()
+                            && claudeCodeService.getClaudeCodeProvider().isInstalled()) {
+                        defaultModelId = ClaudeCodeCliProvider.MODEL_PREFIX
+                                + claudeCodeService.getClaudeCodeProvider().defaultModelOrFallback();
+                    }
                     log.info("Default model ID: {}", defaultModelId);
                     modelSelectorPanel.setModels(models, defaultModelId);
                     // A restored session carries its model; reselect it now that

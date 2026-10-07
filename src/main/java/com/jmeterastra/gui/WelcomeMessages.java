@@ -37,6 +37,9 @@ public final class WelcomeMessages {
                 + "3. Restart JMeter and open this panel again\n\n"
                 + "**Prefer free/local?** Install [Ollama](https://ollama.com/), pull a chat model, "
                 + "set `jmeter.ai.service.type=ollama`, and restart. No cloud key needed.\n\n"
+                + "**Have a Claude Code subscription?** Install [Node.js](https://nodejs.org/), run "
+                + "`npm install -g @anthropic-ai/claude-code`, then run `claude` once to sign in. "
+                + "Restart JMeter and this panel picks it up automatically - no API key needed.\n\n"
                 + "Once a provider is ready, ask about your test plan or type `@` for commands.";
     }
 }

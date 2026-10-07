@@ -60,8 +60,18 @@ class ProviderStatusTest {
 
     @Test
     void fromConfig_notReadyWithoutKeys() {
+        props.put("jmeter.ai.claudecode.provider.enabled", "false");
         ProviderStatus status = ProviderStatus.fromConfig();
         assertFalse(status.isReady());
+        assertFalse(status.hasAnyCloudProvider());
+    }
+
+    @Test
+    void fromConfig_readyByDefaultViaClaudeCodeCli() {
+        // No cloud keys, no explicit property at all: claudecode.provider.enabled
+        // defaults to true, so a fresh install is ready without any config.
+        ProviderStatus status = ProviderStatus.fromConfig();
+        assertTrue(status.isReady());
         assertFalse(status.hasAnyCloudProvider());
     }
 
@@ -105,6 +115,7 @@ class ProviderStatusTest {
     @Test
     void placeholderKey_notReady() {
         props.put("openai.api.key", "YOUR_OPENAI_API_KEY");
+        props.put("jmeter.ai.claudecode.provider.enabled", "false");
         assertFalse(ProviderStatus.fromConfig().isReady());
     }
 }
