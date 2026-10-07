@@ -110,7 +110,19 @@ class InputOptionsRow extends JPanel {
     }
 
     void updateHintVisibility(int width) {
-        hintPanel.setVisible(width >= UiTokens.HINT_VISIBILITY_WIDTH);
+        // The stats label's width grows as context/cost text appears (e.g. after
+        // the first response), so a fixed threshold alone can under-hide the hint
+        // and the two FlowLayout panels visually overlap within the row.
+        int statsWidth = statsPanel.getPreferredSize().width;
+        int hintWidth = hintLabel.getPreferredSize().width;
+        int required = Math.max(UiTokens.HINT_VISIBILITY_WIDTH,
+                statsWidth + hintWidth + UiTokens.SPACE_2 * 4);
+        hintPanel.setVisible(width >= required);
+    }
+
+    /** Re-checks hint visibility against the current width; call after the stats label's content changes. */
+    void refreshHintVisibility() {
+        updateHintVisibility(getWidth());
     }
 
     boolean isHintVisible() {

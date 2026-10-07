@@ -51,6 +51,11 @@ final class ModelDisplay {
     /** The standard one-line label: {@code "gpt-4o  ·  OpenAI"}. */
     static String formatLabel(String modelId) {
         String[] parts = parse(modelId);
+        // "default" (Claude Code / Codex CLI) is a non-descriptive placeholder;
+        // lead with the provider instead, e.g. "Claude Code  ·  default".
+        if ("default".equals(parts[0]) && !parts[1].isEmpty()) {
+            return parts[1] + "  ·  " + parts[0];
+        }
         return parts[1].isEmpty() ? parts[0] : parts[0] + "  ·  " + parts[1];
     }
 }

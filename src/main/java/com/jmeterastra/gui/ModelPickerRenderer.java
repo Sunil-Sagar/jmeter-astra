@@ -98,6 +98,11 @@ class ModelPickerRenderer extends DefaultListCellRenderer {
         String[] parts = ModelDisplay.parse(modelId);
         String metadata = metadataFor(modelId, catalog);
         boolean pinned = prefs.isPinned(modelId);
+        // "default" (Claude Code / Codex CLI) is a non-descriptive placeholder;
+        // lead with the provider name instead, e.g. "Claude Code · default".
+        boolean leadWithProvider = "default".equals(parts[0]) && !parts[1].isEmpty();
+        String leading = leadWithProvider ? parts[1] : parts[0];
+        String trailing = leadWithProvider ? parts[0] : parts[1];
 
         Component c = super.getListCellRendererComponent(
                 list, modelId, index, isSelected, cellHasFocus);
@@ -116,9 +121,9 @@ class ModelPickerRenderer extends DefaultListCellRenderer {
                 .append(");'>★</span> ");
         html.append("<span style='color:rgb(").append(primary.getRed()).append(',')
                 .append(primary.getGreen()).append(',').append(primary.getBlue())
-                .append(");'><b>").append(escapeHtml(parts[0])).append("</b>");
-        if (!parts[1].isEmpty()) {
-            html.append(" · ").append(escapeHtml(parts[1]));
+                .append(");'><b>").append(escapeHtml(leading)).append("</b>");
+        if (!trailing.isEmpty()) {
+            html.append(" · ").append(escapeHtml(trailing));
         }
         html.append("</span>");
         if (!metadata.isEmpty()) {

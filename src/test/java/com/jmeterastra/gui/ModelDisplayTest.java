@@ -51,4 +51,10 @@ class ModelDisplayTest {
     void formatLabelFallsBackToNameOnly() {
         assertEquals("Loading available models\u2026", ModelDisplay.formatLabel(null));
     }
+
+    @Test
+    void formatLabelLeadsWithProviderForTheDefaultPlaceholder() {
+        assertEquals("Claude Code  ·  default", ModelDisplay.formatLabel("claude-code:default"));
+        assertEquals("ChatGPT / Codex  ·  default", ModelDisplay.formatLabel("codex:default"));
+    }
 }

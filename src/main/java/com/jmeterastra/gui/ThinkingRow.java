@@ -15,6 +15,7 @@ import com.jmeterastra.gui.theme.UiTokens;
 final class ThinkingRow extends JPanel {
     private final JLabel label;
     private final Timer timer;
+    private final long startMillis = System.currentTimeMillis();
     private int dots;
 
     ThinkingRow() {
@@ -43,6 +44,8 @@ final class ThinkingRow extends JPanel {
 
     private void advance() {
         dots = (dots + 1) % 4;
-        label.setText("JmeterAstra is thinking" + ".".repeat(dots));
+        long elapsedSeconds = (System.currentTimeMillis() - startMillis) / 1000;
+        label.setText("JmeterAstra is thinking" + ".".repeat(dots)
+                + " (" + elapsedSeconds + "s)");
     }
 }

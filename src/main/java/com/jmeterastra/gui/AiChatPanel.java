@@ -318,6 +318,9 @@ public class AiChatPanel
                     .map(ModelCapabilityCatalog.CapabilityInfo::getContextWindow)
                     .orElse(0L);
             contextStatsLabel.showStats(contextTokens, estimated, contextWindow, snapshot);
+            if (inputOptionsRow != null) {
+                inputOptionsRow.refreshHintVisibility();
+            }
         });
     }
 

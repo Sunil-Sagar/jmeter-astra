@@ -137,4 +137,14 @@ class ModelPickerRendererTest {
         assertTrue(html.contains("<b>gpt-9-turbo</b> · OpenAI"));
         assertFalse(html.contains("<br>"));
     }
+
+    @Test
+    void theDefaultPlaceholderLeadsWithTheProviderName() {
+        ModelPickerRenderer renderer =
+                new ModelPickerRenderer(prefs(), ModelCapabilityCatalog.getInstance());
+        Component c = renderer.getListCellRendererComponent(
+                new JList<>(), "claude-code:default", 0, false, false);
+        String html = ((JLabel) c).getText();
+        assertTrue(html.contains("<b>Claude Code</b> · default"), html);
+    }
 }

@@ -29,10 +29,12 @@ class ThinkingCard extends JPanel {
     private final JTextArea bodyArea;
     private final JPanel bodyWrapper;
     private final Timer spinnerTimer;
+    private final long startMillis = System.currentTimeMillis();
 
     private int spinnerFrame = 0;
     private boolean running = true;
     private boolean collapsed = false;
+    private long finishedAfterSeconds = -1;
 
     ThinkingCard() {
         super(new BorderLayout());
@@ -97,6 +99,7 @@ class ThinkingCard extends JPanel {
             return;
         }
         running = false;
+        finishedAfterSeconds = (System.currentTimeMillis() - startMillis) / 1000;
         spinnerTimer.stop();
         setCollapsed(true);
     }
@@ -158,9 +161,10 @@ class ThinkingCard extends JPanel {
         String chevron = collapsed ? "▸ " : "▾ ";
         headerLabel.setForeground(running ? ThemeColors.accent() : ThemeColors.secondaryText());
         if (running) {
-            headerLabel.setText(chevron + SPINNER_FRAMES[spinnerFrame] + " Thinking…");
+            long elapsedSeconds = (System.currentTimeMillis() - startMillis) / 1000;
+            headerLabel.setText(chevron + SPINNER_FRAMES[spinnerFrame] + " Thinking… (" + elapsedSeconds + "s)");
         } else {
-            headerLabel.setText(chevron + "✦ Thoughts" + previewSuffix());
+            headerLabel.setText(chevron + "✦ Thought for " + finishedAfterSeconds + "s" + previewSuffix());
         }
     }
 
