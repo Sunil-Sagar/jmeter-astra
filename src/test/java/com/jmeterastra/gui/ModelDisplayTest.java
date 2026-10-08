@@ -57,4 +57,10 @@ class ModelDisplayTest {
         assertEquals("Claude Code  ·  default", ModelDisplay.formatLabel("claude-code:default"));
         assertEquals("ChatGPT / Codex  ·  default", ModelDisplay.formatLabel("codex:default"));
     }
+
+    @Test
+    void primaryNameUsesTheProviderForTheDefaultPlaceholder() {
+        assertEquals("Claude Code", ModelDisplay.primaryName("claude-code:default"));
+        assertEquals("gpt-4o", ModelDisplay.primaryName("openai:gpt-4o"));
+    }
 }

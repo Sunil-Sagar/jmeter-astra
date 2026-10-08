@@ -132,7 +132,7 @@ class ModelSelectorPanel extends JPanel {
      */
     private void applyModel(String model) {
         currentModel = model;
-        selectorButton.setText(ModelDisplay.parse(model)[0]);
+        selectorButton.setText(ModelDisplay.primaryName(model));
         selectorButton.setToolTipText("Selected model: " + ModelDisplay.formatLabel(model)
                 + " - click to change");
         starButton.setEnabled(true);

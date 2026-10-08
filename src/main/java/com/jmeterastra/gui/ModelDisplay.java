@@ -51,11 +51,23 @@ final class ModelDisplay {
     /** The standard one-line label: {@code "gpt-4o  ·  OpenAI"}. */
     static String formatLabel(String modelId) {
         String[] parts = parse(modelId);
-        // "default" (Claude Code / Codex CLI) is a non-descriptive placeholder;
-        // lead with the provider instead, e.g. "Claude Code  ·  default".
-        if ("default".equals(parts[0]) && !parts[1].isEmpty()) {
+        if (isNonDescriptivePlaceholder(parts)) {
             return parts[1] + "  ·  " + parts[0];
         }
         return parts[1].isEmpty() ? parts[0] : parts[0] + "  ·  " + parts[1];
+    }
+
+    /**
+     * The single most useful name for compact spots (toolbar button): the
+     * provider when the parsed name is the non-descriptive "default"
+     * placeholder (Claude Code / Codex CLI), else the parsed name itself.
+     */
+    static String primaryName(String modelId) {
+        String[] parts = parse(modelId);
+        return isNonDescriptivePlaceholder(parts) ? parts[1] : parts[0];
+    }
+
+    private static boolean isNonDescriptivePlaceholder(String[] parts) {
+        return "default".equals(parts[0]) && !parts[1].isEmpty();
     }
 }

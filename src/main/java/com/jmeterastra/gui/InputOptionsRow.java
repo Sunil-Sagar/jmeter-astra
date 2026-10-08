@@ -25,6 +25,7 @@ class InputOptionsRow extends JPanel {
     private final JPanel optionsStrip;
     private final JPanel hintPanel;
     private final JPanel statsPanel;
+    private final JPanel statusStrip;
     private final JPanel actionPanel;
     private final JLabel hintLabel;
     private final QuietButton sendButton;
@@ -78,10 +79,11 @@ class InputOptionsRow extends JPanel {
         hintPanel.setOpaque(false);
         hintPanel.add(hintLabel);
 
-        JPanel statusStrip = new JPanel(new BorderLayout(UiTokens.SPACE_2, 0));
-        statusStrip.setOpaque(false);
-        statusStrip.add(statsPanel, BorderLayout.WEST);
-        statusStrip.add(hintPanel, BorderLayout.EAST);
+        JPanel statusStripPanel = new JPanel(new BorderLayout(UiTokens.SPACE_2, 0));
+        statusStripPanel.setOpaque(false);
+        statusStripPanel.add(statsPanel, BorderLayout.WEST);
+        statusStripPanel.add(hintPanel, BorderLayout.EAST);
+        statusStrip = statusStripPanel;
 
         sendButton = new QuietButton("", QuietButton.Kind.PRIMARY).iconOnly();
         sendButton.setIcon(ActionIcons.send(16));
@@ -115,9 +117,17 @@ class InputOptionsRow extends JPanel {
         // and the two FlowLayout panels visually overlap within the row.
         int statsWidth = statsPanel.getPreferredSize().width;
         int hintWidth = hintLabel.getPreferredSize().width;
-        int required = Math.max(UiTokens.HINT_VISIBILITY_WIDTH,
-                statsWidth + hintWidth + UiTokens.SPACE_2 * 4);
-        hintPanel.setVisible(width >= required);
+        int needed = statsWidth + hintWidth + UiTokens.SPACE_2 * 2;
+        if (statusStrip.getWidth() > 0) {
+            // Laid out: statusStrip only gets the leftover CENTER space after the
+            // attach/nav buttons (WEST) and send button (EAST) take theirs, so its
+            // own rendered width is the real available space - not the whole row.
+            hintPanel.setVisible(statusStrip.getWidth() >= needed);
+            return;
+        }
+        // Not yet laid out (e.g. constructed in isolation by tests): fall back to
+        // the legacy heuristic against the row's own width.
+        hintPanel.setVisible(width >= Math.max(UiTokens.HINT_VISIBILITY_WIDTH, needed));
     }
 
     /** Re-checks hint visibility against the current width; call after the stats label's content changes. */

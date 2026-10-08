@@ -116,6 +116,27 @@ class InputOptionsRowTest {
     }
 
     @Test
+    void hintHidesWhenTheStatsLabelGrowsEvenIfTheWholeRowStillHasWidth() {
+        // Regression: statusStrip only gets the leftover CENTER space after the
+        // attach/nav buttons and send button take theirs, so comparing against the
+        // *whole row's* width (instead of statusStrip's own rendered width) let the
+        // hint stay visible and overlap the stats label once it grew wide.
+        InputOptionsRow row = new InputOptionsRow(null, attachmentBar, new JButton());
+        javax.swing.JLabel stats = new javax.swing.JLabel();
+        row.setStatsComponent(stats);
+        row.setSize(600, 40);
+        row.validate();
+        row.refreshHintVisibility();
+        assertTrue(row.isHintVisible(), "plenty of room with an empty stats label");
+
+        stats.setText("ctx 123.4k/400k \u00b7 $12.3456");
+        row.setSize(420, 40);
+        row.validate();
+        row.refreshHintVisibility();
+        assertFalse(row.isHintVisible(), "a wide stats label must hide the hint, not overlap it");
+    }
+
+    @Test
     void modelRowIsInstalledInsideComposerOptions() {
         InputOptionsRow row = new InputOptionsRow(null, attachmentBar, new JButton());
         javax.swing.JPanel modelRow = new javax.swing.JPanel();
